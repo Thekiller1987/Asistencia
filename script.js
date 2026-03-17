@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbx2T6UMrc16CdsyjziY7G0yhmqSZWQvsoZDIhCOQC6eirfNAczZPwJPCM2BYftLWYBPpA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYclYUQE3T7wd125LJmMGbrak-ybYyw_MAjGV9znDw2JgYECqnR6lG0vF0RFQ58k7D4w/exec';
 
 // ESTADO EN MEMORIA (Requisito: Cero LocalStorage)
 const appState = {
