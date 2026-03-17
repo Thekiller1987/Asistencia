@@ -23,6 +23,13 @@ function doPost(e) {
   if (!sheetClases) {
       sheetClases = ss.insertSheet("Clases");
       sheetClases.appendRow(["ID_Clase", "Nombre_Clase", "Profesor", "Dias_Impartidos", "Estado", "Fechas_Programa", "Fecha_Inicio", "Fecha_Fin"]);
+  } else {
+      // Migración: Asegurar que existan las columnas de fecha si la hoja ya existía
+      var headers = sheetClases.getRange(1, 1, 1, sheetClases.getLastColumn()).getValues()[0];
+      if (headers.indexOf("Fecha_Inicio") === -1) {
+          sheetClases.getRange(1, 7).setValue("Fecha_Inicio");
+          sheetClases.getRange(1, 8).setValue("Fecha_Fin");
+      }
   }
 
   var sheetInscripciones = ss.getSheetByName("Inscripciones");
@@ -204,12 +211,17 @@ function doPost(e) {
     var todosUsuarios = sheetUsuarios.getDataRange().getValues();
     var todasInscripciones = sheetInscripciones.getDataRange().getValues();
     
-    // Mapear arrays a objetos
     var clasesArr = todasClases.slice(1).map(function(c) {
+       var fInicio = c[6];
+       var fFin = c[7];
+       // Convertir objetos Date a string YYYY-MM-DD para el frontend
+       if (fInicio instanceof Date) fInicio = fInicio.toISOString().split('T')[0];
+       if (fFin instanceof Date) fFin = fFin.toISOString().split('T')[0];
+
        return { 
          ID_Clase: c[0], Nombre: c[1], Profesor: c[2], Dias: c[3], 
          Estado: c[4] || "Activa", FechasPrograma: c[5] || "[]",
-         FechaInicio: c[6] || "", FechaFin: c[7] || "" 
+         FechaInicio: fInicio || "", FechaFin: fFin || "" 
        };
     });
     
