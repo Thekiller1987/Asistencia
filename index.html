@@ -40,10 +40,10 @@
         }
     </script>
     <style>
-        /* Fallback loader en lo que expende tailwind */
-        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; margin: 0; padding: 0;}
-        .view-section { display: none; opacity: 0; transition: opacity 0.3s ease; }
-        .view-section.active { display: flex; opacity: 1; }
+        /* Fallback básico mientras tailwind compila */
+        body { font-family: 'Inter', sans-serif; background-color: #002157; margin: 0; padding: 0;}
+        /* Eliminamos el display: none obligatorio para que no choquen los renders */
+        .view-section { transition: opacity 0.3s ease; }
     </style>
 
     <!-- Custom CSS -->
