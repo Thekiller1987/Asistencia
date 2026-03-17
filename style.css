@@ -118,33 +118,29 @@ button, .cursor-pointer, select, input[type="submit"] {
     z-index: 10;
 }
 
-/* Máscara de oscurecimiento para escáner */
+/* Máscara de oscurecimiento (Desechada en favor de contenedor fijo) */
 .scanner-mask {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 10;
-    pointer-events: none;
-    clip-path: polygon(
-        0% 0%, 0% 100%, 
-        calc(50% - 125px) 100%, 
-        calc(50% - 125px) calc(50% - 125px), 
-        calc(50% + 125px) calc(50% - 125px), 
-        calc(50% + 125px) calc(50% + 125px), 
-        calc(50% - 125px) calc(50% + 125px), 
-        calc(50% - 125px) 100%, 
-        100% 100%, 100% 0%
-    );
+    display: none;
 }
 
 #reader {
-    background: black !important;
+    width: 280px !important;
+    height: 280px !important;
+    border-radius: 2rem;
+    overflow: hidden;
+    background: #000 !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 #reader video {
     object-fit: cover !important;
     width: 100% !important;
     height: 100% !important;
+}
+
+.scanner-gradient {
+    background: radial-gradient(circle at center, #002157 0%, #000b1a 100%);
 }
 
 /* Prevenir zoom automático en iOS al enfocar inputs */
