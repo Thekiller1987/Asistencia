@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS deferido para no bloquear carga inicial -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -39,18 +39,23 @@
             }
         }
     </script>
+    <style>
+        /* Fallback loader en lo que expende tailwind */
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; margin: 0; padding: 0;}
+        .view-section { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .view-section.active { display: flex; opacity: 1; }
+    </style>
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="./style.css">
 
-    <!-- External Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- External Libraries - Deferidos para rendimiento de carga -->
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script defer src="https://unpkg.com/html5-qrcode"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-</head>
-<body class="bg-usan-blue text-gray-800 font-sans min-h-screen flex flex-col items-center select-none bg-unan-blue overflow-x-hidden">
+<body class="text-gray-800 font-sans min-h-screen flex flex-col items-center select-none bg-unan-blue overflow-x-hidden">
     <!-- Offline Banner -->
     <div id="offline-banner" class="hidden w-full bg-red-500 text-white text-center py-2 text-sm font-medium transition-all duration-300 transform -translate-y-full fixed top-0 z-50">
         <div class="flex items-center justify-center gap-2">
