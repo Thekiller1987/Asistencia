@@ -500,13 +500,20 @@ const app = {
                                 <p class="text-xs text-gray-400 font-medium">Días: ${c.Dias || 'N/A'}</p>
                                 <p class="text-[10px] mt-1 font-bold ${isActive ? 'text-green-600' : 'text-gray-400'} uppercase tracking-wider">${c.Estado}</p>
                             </div>
-                            <div class="flex gap-1">
-                                <button onclick="app.editClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-unan-blue transition rounded-lg hover:bg-blue-50" title="Editar Clase">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                </button>
-                                <button onclick="app.deleteClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-red-500 transition rounded-lg hover:bg-red-50" title="Eliminar Permanente">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
+                            <div class="flex flex-col items-end gap-2">
+                                <div class="flex gap-1">
+                                    <button onclick="app.editClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-unan-blue transition rounded-lg hover:bg-blue-50" title="Editar Clase">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </button>
+                                    <button onclick="app.deleteClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-red-500 transition rounded-lg hover:bg-red-50" title="Eliminar Permanente">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                </div>
+                                <div onclick="app.showLargeCode('${c.Codigo}', '${c.Nombre}')" class="bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 flex items-center gap-1.5 cursor-pointer hover:bg-blue-50 transition-colors group">
+                                    <span class="text-[10px] font-black text-gray-400 group-hover:text-unan-blue tracking-tighter uppercase transition-colors">CÓDIGO:</span>
+                                    <span class="text-xs font-bold text-gray-700 tracking-widest">${c.Codigo}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-300 group-hover:text-unan-blue transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                                </div>
                             </div>
                         </div>
                         <div class="flex gap-2 border-t border-gray-100 pt-3">
@@ -594,7 +601,7 @@ const app = {
             });
 
             // Si aún no hay programa, % es 100 por defecto
-            let pct = totalClasesProgramadas === 0 ? 100 : Math.round((studentAsist / totalClasesProgramadas) * 100);
+            let pct = totalClasesProgramadas === 0 ? 100 : Math.min(100, Math.round((studentAsist / totalClasesProgramadas) * 100));
             
             alumnosData.push({
                 nombre: studentInfo.Nombre,
@@ -736,7 +743,15 @@ const app = {
             document.getElementById('new-class-end-date').value = '';
             checkboxes.forEach(chk => chk.checked = false);
             app.playSound('success-sound');
-            app.loadMasterData(); // Refresh all
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Clase Creada',
+                html: `La clase se creó con éxito.<br><br><span class="text-xs text-gray-400">CÓDIGO DE ACCESO:</span><br><b class="text-2xl text-unan-blue tracking-widest">${res.codigo}</b>`,
+                confirmButtonColor: '#002157'
+            }).then(() => {
+                app.loadMasterData(); 
+            });
         } else {
             app.alertError('Error', res.message);
         }
@@ -1036,11 +1051,18 @@ const app = {
         matriculados.forEach(m => {
             const eInfo = estudiantes.find(e => e.Usuario === m.Usuario) || { Nombre: m.NombreEstudiante, Carnet: m.CarnetEstudiante, Firma: '', Genero: 'N/A' };
             const mAsistencias = asistencias.filter(a => a.ID_Clase === idClase && a.Usuario === m.Usuario && (a.Estado === 'Presente' || a.Estado === 'Justificado'));
-            const pct = fechasProg.length === 0 ? 100 : Math.round((mAsistencias.length / fechasProg.length) * 100);
+            const pct = fechasProg.length === 0 ? 100 : Math.min(100, Math.round((mAsistencias.length / fechasProg.length) * 100));
             
             let rowHtml = `
                 <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
-                    <td class="p-3 font-bold text-gray-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">${eInfo.Nombre}</td>
+                    <td class="p-3 font-bold text-gray-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                        <div class="flex items-center gap-2">
+                            <button onclick="app.expulsarEstudiante('${idClase}', '${m.Usuario}')" class="p-1 text-red-300 hover:text-red-500 hover:bg-red-50 rounded" title="Expulsar Estudiante">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                            </button>
+                            ${eInfo.Nombre}
+                        </div>
+                    </td>
                     <td class="p-3 font-medium text-gray-500 text-xs">${eInfo.Carnet}</td>
                     <td class="p-3">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold ${eInfo.Genero === 'Femenino' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}">
@@ -1073,51 +1095,104 @@ const app = {
         });
     },
 
+    expulsarEstudiante: async (idClase, usuarioEstudiante) => {
+        const confirm = await Swal.fire({
+            title: '¿Expulsar Estudiante?',
+            text: "El estudiante dejará de estar matriculado en esta clase.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, expulsar'
+        });
+
+        if (confirm.isConfirmed) {
+            const res = await app.apiCall({
+                accion: 'expulsarEstudiante',
+                id_clase: idClase,
+                usuario_estudiante: usuarioEstudiante
+            });
+            if(res.status === 'success') {
+                app.playSound('success-sound');
+                app.loadMasterData();
+            } else {
+                app.alertError('Error', res.message);
+            }
+        }
+    },
+
     exportAuditoriaToExcel: () => {
         const idClase = document.getElementById('audit-class-select').value;
         if (!idClase) {
-            app.alertError('Alerta', 'Seleccione una clase primero para auditar.');
+            app.alertError('Alerta', 'Seleccione una clase primero.');
             return;
         }
 
-        const table = document.getElementById('audit-table');
-        if (!table || table.rows.length <= 1 || table.innerText.includes('Sin alumnos')) {
-            app.alertError('Alerta', 'No hay datos en la tabla para exportar.');
+        const { clases, solicitudes, asistencias, estudiantes } = appState.globalData;
+        const claseInfo = clases.find(c => c.ID_Clase === idClase);
+        let fechasProg = [];
+        try { fechasProg = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
+        
+        const matriculados = solicitudes.filter(s => s.ID_Clase === idClase && s.Estado === 'Aprobado');
+        if(matriculados.length === 0) {
+            app.alertError('Alerta', 'No hay estudiantes inscritos.');
             return;
         }
 
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8 Excel
-        let headers = [];
-        const theadCols = table.querySelectorAll('thead th');
-        theadCols.forEach(th => headers.push(`"${th.innerText.replace(/"/g, '""')}"`));
-        csvContent += headers.join(",") + "\r\n";
+        // Generar archivo Excel basado en HTML (soporta imagenes)
+        let html = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${claseInfo.Nombre}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></xml><![endif]--></head>
+          <body style="font-family: Arial, sans-serif;">
+            <h2 style="color: #002157;">Auditoría de Asistencia - ${claseInfo.Nombre}</h2>
+            <p>Exportado el: ${new Date().toLocaleString()}</p>
+            <table border="1" cellpadding="5" cellspacing="0">
+              <thead>
+                <tr style="background-color: #002157; color: white; font-weight: bold;">
+                  <th>Estudiante</th>
+                  <th>Carnet</th>
+                  <th>Fecha Sesión</th>
+                  <th>Estado</th>
+                  <th>Hora de Marcado</th>
+                  <th style="width: 150px;">Firma Digital</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
 
-        const tbodyRows = table.querySelectorAll('tbody tr');
-        tbodyRows.forEach(tr => {
-            let rowCols = [];
-            const tds = tr.querySelectorAll('td');
-            tds.forEach((td, idx) => {
-                if (idx === 3) rowCols.push('"Dato Visual"');
-                else {
-                    let text = td.innerText.replace(/"/g, '""').replace(/(\r\n|\n|\r)/gm, " ");
-                    if (text.includes('✅')) text = "Presente";
-                    else if (text.includes('❌')) text = "Ausente";
-                    else if (text.includes('⚠️')) text = "Justificado";
-                    rowCols.push(`"${text}"`);
-                }
+        matriculados.forEach(m => {
+            const eInfo = estudiantes.find(e => e.Usuario === m.Usuario) || { Nombre: m.NombreEstudiante, Carnet: m.CarnetEstudiante, Firma: '' };
+            fechasProg.forEach(f => {
+                const asist = asistencias.find(a => a.Fecha === f && a.ID_Clase === idClase && a.Usuario === m.Usuario);
+                const isPresent = asist && (asist.Estado === 'Presente' || asist.Estado === 'Justificado');
+                const hora = asist ? asist.Hora : '-';
+                const estadoTxt = isPresent ? 'Presente' : 'Ausente';
+                
+                html += `
+                  <tr>
+                    <td>${eInfo.Nombre}</td>
+                    <td>${eInfo.Carnet}</td>
+                    <td>${f}</td>
+                    <td style="color: ${isPresent ? '#10b981' : '#ef4444'}; font-weight: bold;">${estadoTxt}</td>
+                    <td>${hora}</td>
+                    <td style="height: 60px; vertical-align: middle; text-align: center;">
+                        ${(isPresent && eInfo.Firma) ? `<img src="${eInfo.Firma}" width="120" height="45" style="display: block; margin: auto;">` : ''}
+                    </td>
+                  </tr>
+                `;
             });
-            csvContent += rowCols.join(",") + "\r\n";
         });
 
-        const encodedUri = encodeURI(csvContent);
+        html += `</tbody></table></body></html>`;
+
+        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        const { clases } = appState.globalData;
-        const nombreClase = clases.find(c => c.ID_Clase === idClase)?.Nombre || "General";
-        link.setAttribute("download", `AUDITORIA_${nombreClase.replace(/\s+/g, '_')}_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
+        link.href = url;
+        link.download = `AUDITORIA_DETALLADA_${claseInfo.Nombre.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        app.playSound('success-sound');
     },
 
     exportToExcel: () => {
@@ -1182,6 +1257,48 @@ const app = {
         const isEmpty = !pixelBuffer.some(color => color !== 0);
         if (isEmpty) return null;
         return canvas.toDataURL();
+    },
+
+    // --- NUEVAS FUNCIONES DE CÓDIGO DE CLASE (CLASSROOM STYLE) ---
+    joinClassByCode: async () => {
+        const input = document.getElementById('class-code-input');
+        const code = input.value.trim().toUpperCase();
+        
+        if (code.length < 6) {
+            app.alertError('Error', 'El código debe tener al menos 6 caracteres.');
+            return;
+        }
+
+        const res = await app.apiCall({
+            accion: 'unirsePorCodigo',
+            codigo: code,
+            usuario_estudiante: appState.user.usuario
+        });
+
+        if (res.status === 'success') {
+            app.alertSuccess('¡Éxito!', res.message);
+            input.value = '';
+            app.loadStudentData();
+        } else {
+            app.alertError('Alerta', res.message);
+        }
+    },
+
+    showLargeCode: (code, className) => {
+        const modal = document.getElementById('modal-large-code');
+        const display = document.getElementById('large-code-display');
+        const nameDisplay = document.getElementById('large-code-class-name');
+        
+        display.innerText = code;
+        nameDisplay.innerText = className;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    },
+
+    closeLargeCode: () => {
+        const modal = document.getElementById('modal-large-code');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 };
 

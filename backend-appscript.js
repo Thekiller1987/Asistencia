@@ -30,6 +30,15 @@ function doPost(e) {
           sheetClases.getRange(1, 7).setValue("Fecha_Inicio");
           sheetClases.getRange(1, 8).setValue("Fecha_Fin");
       }
+      if (headers.indexOf("Codigo") === -1) {
+          var nextCol = sheetClases.getLastColumn() + 1;
+          sheetClases.getRange(1, nextCol).setValue("Codigo");
+          // Migración para asignar códigos a clases existentes
+          var dataClases = sheetClases.getDataRange().getValues();
+          for(var m=1; m < dataClases.length; m++) {
+              sheetClases.getRange(m+1, nextCol).setValue(generateClassCode());
+          }
+      }
   }
 
   var sheetInscripciones = ss.getSheetByName("Inscripciones");
@@ -87,9 +96,43 @@ function doPost(e) {
   // 4. CREAR NUEVA CLASE CON PROGRAMA SEMANAL (MAESTRO)
   if (data.accion === "crearClase") {
     var idClase = "CL-" + new Date().getTime();
-    // Guardamos en Clases (A: ID_Clase, B: Nombre, C: Profesor, D: Horario/Dias, E: Estado, F: Fechas_Programa JSON, G: Fecha_Inicio, H: Fecha_Fin)
-    sheetClases.appendRow([idClase, data.nombre_clase, data.profesor, data.dias, "Activa", data.fechas_programa || "[]", data.fecha_inicio || "", data.fecha_fin || ""]);
-    return respuesta({ status: "success", message: "Clase creada correctamente", id_clase: idClase });
+    var codigo = generateClassCode();
+    // Guardamos en Clases (ID_Clase, Nombre, Profesor, Dias, Estado, Fechas_Programa, Fecha_Inicio, Fecha_Fin, Codigo)
+    sheetClases.appendRow([idClase, data.nombre_clase, data.profesor, data.dias, "Activa", data.fechas_programa || "[]", data.fecha_inicio || "", data.fecha_fin || "", codigo]);
+    return respuesta({ status: "success", message: "Clase creada correctamente", id_clase: idClase, codigo: codigo });
+  }
+
+  // 4.1 UNIRSE POR CODIGO (ESTUDIANTE)
+  if (data.accion === "unirsePorCodigo") {
+    var clases = sheetClases.getDataRange().getValues();
+    var idClaseEncontrada = null;
+    var nombreClase = "";
+    
+    var codigoBuscado = String(data.codigo).toUpperCase().trim();
+    
+    for (var i = 1; i < clases.length; i++) {
+        // El código está en la columna 8 (9na columna) según la migración/appendRow
+        if (String(clases[i][8]).toUpperCase() === codigoBuscado) {
+            idClaseEncontrada = clases[i][0];
+            nombreClase = clases[i][1];
+            break;
+        }
+    }
+    
+    if (!idClaseEncontrada) {
+        return respuesta({ status: "error", message: "Código de clase no encontrado." });
+    }
+    
+    // Verificar si ya está inscrito
+    var inscripciones = sheetInscripciones.getDataRange().getValues();
+    for (var j = 1; j < inscripciones.length; j++) {
+        if (inscripciones[j][1] == idClaseEncontrada && inscripciones[j][2] == data.usuario_estudiante) {
+            return respuesta({ status: "error", message: "Ya estás inscrito o tienes una solicitud pendiente para esta clase." });
+        }
+    }
+    
+    sheetInscripciones.appendRow([new Date().toLocaleDateString(), idClaseEncontrada, data.usuario_estudiante, "Pendiente"]);
+    return respuesta({ status: "success", message: "Solicitud enviada para la clase: " + nombreClase });
   }
 
   // 5. ESTUDIANTE SOLICITA UNIRSE
@@ -204,33 +247,36 @@ function doPost(e) {
     return respuesta({ status: "success", message: "Asistencia Guardada" });
   }
 
-  // 9. OBTENER DATOS (MAESTRO Y ESTUDIANTE) ACTUALIZADO
+  // 9. OBTENER DATOS (OPTIMIZADO O(n))
   if (data.accion === "obtenerDatosGlobales") {
     var todasAsistencias = sheetAsistencia.getDataRange().getValues();
     var todasClases = sheetClases.getDataRange().getValues();
     var todosUsuarios = sheetUsuarios.getDataRange().getValues();
     var todasInscripciones = sheetInscripciones.getDataRange().getValues();
     
+    // Crear Mapa de Usuarios para búsqueda instantánea
+    var userMap = {};
+    for(var j = 1; j < todosUsuarios.length; j++) {
+       userMap[todosUsuarios[j][7]] = { nombre: todosUsuarios[j][0], carnet: todosUsuarios[j][3], firma: todosUsuarios[j][6], genero: todosUsuarios[j][9] || "N/A" };
+    }
+
     var clasesArr = todasClases.slice(1).map(function(c) {
-       var fInicio = c[6];
-       var fFin = c[7];
-       // Convertir objetos Date a string YYYY-MM-DD para el frontend
+       var fInicio = c[6]; var fFin = c[7];
        if (fInicio instanceof Date) fInicio = fInicio.toISOString().split('T')[0];
        if (fFin instanceof Date) fFin = fFin.toISOString().split('T')[0];
-
        return { 
          ID_Clase: c[0], Nombre: c[1], Profesor: c[2], Dias: c[3], 
          Estado: c[4] || "Activa", FechasPrograma: c[5] || "[]",
-         FechaInicio: fInicio || "", FechaFin: fFin || "" 
+         FechaInicio: fInicio || "", FechaFin: fFin || "",
+         Codigo: c[8] || ""
        };
     });
     
     var solicitudesArr = todasInscripciones.slice(1).map(function(ins) {
-       var userRow = todosUsuarios.find(function(u) { return u[7] == ins[2]; });
+       var user = userMap[ins[2]] || { nombre: "Desconocido", carnet: "N/A" };
        return { 
            Fecha: ins[0], ID_Clase: ins[1], Usuario: ins[2], Estado: ins[3],
-           NombreEstudiante: userRow ? userRow[0] : "Desconocido",
-           CarnetEstudiante: userRow ? userRow[3] : "N/A"
+           NombreEstudiante: user.nombre, CarnetEstudiante: user.carnet
        };
     });
 
@@ -238,10 +284,10 @@ function doPost(e) {
        return { Fecha: a[0], ID_Clase: a[1], Usuario: a[2], Estado: a[3], Hora: a[4] };
     });
 
-    // Se extrae la Base64 solo para que el Maestro pueda auditar las firmas en la vista extendida, y el Genero
-    var estudiantesArr = todosUsuarios.slice(1).filter(function(u){ return u[2] === "Estudiante" }).map(function(u) {
-       return { Nombre: u[0], Usuario: u[7], Carnet: u[3], Firma: u[6], Genero: u[9] || "N/A" };
-    });
+    var estudiantesArr = [];
+    for(var uid in userMap) {
+       estudiantesArr.push({ Nombre: userMap[uid].nombre, Usuario: uid, Carnet: userMap[uid].carnet, Firma: userMap[uid].firma, Genero: userMap[uid].genero });
+    }
 
     return respuesta({ 
       status: "success", 
@@ -274,9 +320,31 @@ function doPost(e) {
     return respuesta({ status: "success", message: "Asistencia actualizada correctamente." });
   }
 
+  // 11. EXPULSAR ESTUDIANTE DE UNA CLASE
+  if (data.accion === "expulsarEstudiante") {
+    var inscripcionesRange = sheetInscripciones.getDataRange();
+    var inscripciones = inscripcionesRange.getValues();
+    for (var x = 1; x < inscripciones.length; x++) {
+        if(inscripciones[x][1] == data.id_clase && inscripciones[x][2] == data.usuario_estudiante) {
+            sheetInscripciones.deleteRow(x + 1);
+            return respuesta({ status: "success", message: "Estudiante expulsado de la clase correctamente." });
+        }
+    }
+    return respuesta({ status: "error", message: "No se encontró el registro de inscripción." });
+  }
+
   return respuesta({ status: "error", message: "Acción no válida." });
 }
 
 function respuesta(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function generateClassCode() {
+  var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Evitamos O, I, 1, 0 por confusión
+  var code = "";
+  for (var i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 }

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" href="data:,">
     <title>Asistencia UNAN</title>
     
     <!-- PWA Meta tags -->
@@ -283,12 +284,26 @@
                         </div>
                         
                         <div class="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Unirse a Nueva Clase</label>
-                            <div class="flex gap-2">
-                                <select id="student-class-select" class="flex-grow px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-1 focus:ring-unan-light outline-none bg-white">
-                                    <option value="">Seleccione una clase...</option>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">Inscribirse en Materia</label>
+                            
+                            <!-- Opción 1: Lista -->
+                            <div class="flex gap-2 mb-3">
+                                <select id="student-class-select" class="flex-grow px-3 py-2.5 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-bold text-gray-700">
+                                    <option value="">Buscar en la lista...</option>
                                 </select>
-                                <button onclick="app.requestEnrollment()" class="bg-unan-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-unan-light transition-colors whitespace-nowrap">Solicitar</button>
+                                <button onclick="app.requestEnrollment()" class="bg-unan-blue text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-unan-light transition-all shadow-sm">Solicitar</button>
+                            </div>
+
+                            <div class="flex items-center gap-2 my-3">
+                                <span class="flex-grow h-px bg-gray-200"></span>
+                                <span class="text-[10px] font-black text-gray-300">O USA UN CÓDIGO</span>
+                                <span class="flex-grow h-px bg-gray-200"></span>
+                            </div>
+
+                            <!-- Opción 2: Código -->
+                            <div class="flex gap-2">
+                                <input type="text" id="class-code-input" maxlength="6" placeholder="EJ: A7B2X9" class="flex-grow px-3 py-2.5 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-black text-center tracking-widest placeholder:font-medium placeholder:tracking-normal">
+                                <button onclick="app.joinClassByCode()" class="bg-unan-accent text-unan-blue px-4 py-2.5 rounded-xl text-sm font-black hover:bg-yellow-400 transition-all shadow-sm">Unirse</button>
                             </div>
                         </div>
                     </div>
@@ -296,10 +311,27 @@
 
                 <!-- Scanner Container -->
                 <div id="scanner-container" class="hidden bg-black fixed inset-0 z-50 flex flex-col">
-                    <div class="flex-grow relative h-full w-full" id="reader"></div>
-                    <button onclick="app.stopScanner()" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-red-500 text-white rounded-full px-6 py-3 shadow-lg font-medium flex items-center gap-2 z-[60]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                        Cancelar
+                    <div class="flex-grow relative h-full w-full">
+                        <div id="reader" class="h-full w-full"></div>
+                        <!-- Overlay con Logo y Guía -->
+                        <div class="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center p-6">
+                            <div class="w-64 h-64 border-2 border-white/20 rounded-3xl relative">
+                                <div class="absolute inset-0 flex items-center justify-center opacity-20">
+                                    <img src="./logo.png" alt="Logo" class="w-24 h-24 grayscale invert brightness-200">
+                                </div>
+                                <div class="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-l-4 border-unan-accent rounded-tl-xl"></div>
+                                <div class="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-r-4 border-unan-accent rounded-tr-xl"></div>
+                                <div class="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-l-4 border-unan-accent rounded-bl-xl"></div>
+                                <div class="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-r-4 border-unan-accent rounded-br-xl"></div>
+                            </div>
+                            <p class="text-white text-[10px] font-black mt-8 bg-unan-blue/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 tracking-widest uppercase animate-pulse">
+                                Alinea el escaneo aquí
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="app.stopScanner()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-red-500/80 hover:bg-red-600 text-white rounded-2xl px-10 py-4 shadow-2xl font-black flex items-center gap-3 z-[60] backdrop-blur-md transition-all active:scale-95 border border-white/20 tracking-tight">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                        CANCELAR
                     </button>
                 </div>
 
@@ -507,7 +539,12 @@
                                 <div id="qrcode" class="w-full h-full flex justify-center items-center"></div>
                             </div>
                             <p class="text-lg text-unan-blue font-bold text-center animate-pulse">¡Escanea ahora para marcar asistencia!</p>
-                            <p class="text-xs text-gray-400 mt-2">El código expira automáticamente por seguridad.</p>
+                            <p class="text-xs text-gray-400 mt-2 mb-6">El código expira automáticamente por seguridad.</p>
+
+                            <button onclick="app.closeQRModal()" class="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 border border-gray-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                                Volver al Panel de Control
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -603,6 +640,28 @@
         </section>
 
     </main>
+
+    <!-- Modal: Código de Clase Gigante ( Classroom Style ) -->
+    <div id="modal-large-code" class="hidden fixed inset-0 z-[110] bg-unan-blue flex flex-col items-center justify-center p-6 animate-fade-in">
+        <button onclick="app.closeLargeCode()" class="absolute top-8 right-8 text-white/50 hover:text-white transition-all p-2 rounded-full hover:bg-white/10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        
+        <div class="text-center max-w-4xl w-full">
+            <p class="text-unan-accent font-black text-xl uppercase tracking-[0.3em] mb-4 animate-pulse">Código de la Clase</p>
+            <h2 id="large-code-display" class="text-white text-[8rem] sm:text-[15rem] font-black leading-none selection:bg-unan-accent selection:text-unan-blue tracking-tighter">------</h2>
+            <div class="mt-12 space-y-2">
+                <h3 id="large-code-class-name" class="text-white text-4xl font-bold opacity-80">Nombre de la Clase</h3>
+                <p class="text-blue-200 text-xl font-medium">Comparte este código con tus estudiantes para que se unan directamente.</p>
+            </div>
+            
+            <div class="mt-20 flex justify-center">
+                <div class="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
+                    <img src="./logo.png" alt="UNAN" class="h-24 w-auto grayscale invert opacity-30">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Overlay Loading (Global) -->
     <div id="global-loader" class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-50 flex-col items-center justify-center">
