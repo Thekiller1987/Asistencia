@@ -36,7 +36,7 @@ function doPost(e) {
     var registros = sheetUsuarios.getDataRange().getValues();
     for (var i = 1; i < registros.length; i++) {
       if (registros[i][7] == data.usuario && registros[i][8] == data.clave) {
-        if (data.rol && registros[i][2] !== data.rol) return respuesta({ status: "error", message: "El rol no coincide." });
+        // Validación eliminada: Dejamos que el frontend maneje la redirección basado en db_role
         return respuesta({ 
           status: "success", 
           data: {

@@ -178,6 +178,7 @@ const app = {
         const user = document.getElementById('login-user').value.trim();
         const pass = document.getElementById('login-pass').value.trim();
         
+        // Remover currentRole payload as backend handles true role verification now
         const payload = { accion: 'login', usuario: user, clave: pass, rol: appState.currentRole };
         const res = await app.apiCall(payload);
         
@@ -188,7 +189,10 @@ const app = {
             document.getElementById('form-login').reset();
             app.playSound('success-sound');
             
-            if (appState.currentRole === 'Maestro') {
+            // Navigate based on Real Role assigned in BD, not the button clicked.
+            if (appState.user.rol === 'Super Admin') {
+                app.showView('view-dashboard-superadmin');
+            } else if (appState.user.rol === 'Maestro') {
                 app.loadMasterData();
             } else {
                 app.loadStudentData();
