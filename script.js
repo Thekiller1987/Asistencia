@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbLaxUdAFjZjAI6hJRYOST89pZ9ZcIbiB0X6vCCOA9jd3Rli_bTvkwgr8spCB5uYWIh4A/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxGh0h1diXnJpo-jcrkD3ZcJ9myUNXaxpT37_N8xeHsqDhSqakk-4bVXSeERoQYbW68Wg/exec';
 
 // ESTADO EN MEMORIA (Requisito: Cero LocalStorage)
 const appState = {
@@ -164,11 +164,16 @@ const app = {
     apiCall: async (dataBody) => {
         try {
             app.showLoader('Conectando con el servidor...');
+            
+            // Convertir Payload JSON a Form URL Encoded para evitar CORS Preflight Options
+            const formBody = Object.keys(dataBody).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(dataBody[key])).join('&');
+            
             const response = await fetch(GAS_URL, {
                 method: 'POST',
-                // Enviamos text/plain para evitar problemas de preflight CORS masivos. GAS lo parsea bien.
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(dataBody)
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'
+                },
+                body: formBody
             });
             
             const result = await response.json();
