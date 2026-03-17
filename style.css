@@ -1,0 +1,82 @@
+/* Tailwind manejará casi todo, aquí agregamos animaciones personalizadas y pequeños ajustes */
+
+/* Ocultar scrollbar pero permitir scroll */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Glass effect pane */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+.logo-float {
+    animation: float 4s ease-in-out infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.loader-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* Transiciones de Vistas */
+.view-section {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+.view-section.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* Ajustes de SweetAlert para que coincida con el tema */
+div:where(.swal2-container) {
+    z-index: 10000 !important;
+}
+.swal2-popup {
+    border-radius: 1.25rem !important;
+    font-family: 'Inter', sans-serif !important;
+}
+.swal2-confirm {
+    background-color: #002157 !important;
+    border-radius: 0.5rem !important;
+}
+
+/* Lector QR en pantalla completa de móvil */
+#qr-shaded-region {
+    border-color: rgba(0, 0, 0, 0.7) !important;
+}
+#scanner-container video {
+    object-fit: cover !important;
+}
