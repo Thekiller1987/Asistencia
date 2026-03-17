@@ -678,6 +678,28 @@ const app = {
         appState.currentDashboardData = alumnosData;
     },
 
+    // Helper para generar fechas de programa
+    generateSchedule: (startDateStr, endDateStr, selectedDays) => {
+        let currDate = new Date(startDateStr + "T00:00:00");
+        let endDate = new Date(endDateStr + "T23:59:59");
+        if (currDate > endDate) return [];
+
+        const daysMap = { 'D': 0, 'L': 1, 'M': 2, 'X': 3, 'J': 4, 'V': 5, 'S': 6 };
+        const selectedDaysNum = selectedDays.map(d => daysMap[d]);
+        let fechasPrograma = [];
+        
+        while(currDate <= endDate) {
+            if (selectedDaysNum.includes(currDate.getDay())) {
+                const dayStr = String(currDate.getDate()).padStart(2, '0');
+                const monStr = String(currDate.getMonth() + 1).padStart(2, '0');
+                const yrStr = currDate.getFullYear();
+                fechasPrograma.push(`${dayStr}/${monStr}/${yrStr}`); 
+            }
+            currDate.setDate(currDate.getDate() + 1);
+        }
+        return fechasPrograma;
+    },
+
     createClass: async () => {
         const title = document.getElementById('new-class-name').value.trim();
         const startDateStr = document.getElementById('new-class-start-date').value;
@@ -691,29 +713,7 @@ const app = {
             return;
         }
 
-        let currDate = new Date(startDateStr + "T00:00:00");
-        let endDate = new Date(endDateStr + "T23:59:59");
-        
-        if (currDate > endDate) {
-            app.alertError('Error', 'La fecha de fin debe ser posterior a la fecha de inicio.');
-            return;
-        }
-
-        // Generar las fechas del programa entre inicio y fin según días elegidos
-        const daysMap = { 'D': 0, 'L': 1, 'M': 2, 'X': 3, 'J': 4, 'V': 5, 'S': 6 };
-        const selectedDaysNum = days.map(d => daysMap[d]);
-        
-        let fechasPrograma = [];
-        
-        while(currDate <= endDate) {
-            if (selectedDaysNum.includes(currDate.getDay())) {
-                const dayStr = String(currDate.getDate()).padStart(2, '0');
-                const monStr = String(currDate.getMonth() + 1).padStart(2, '0');
-                const yrStr = currDate.getFullYear();
-                fechasPrograma.push(`${dayStr}/${monStr}/${yrStr}`); 
-            }
-            currDate.setDate(currDate.getDate() + 1);
-        }
+        const fechasPrograma = app.generateSchedule(startDateStr, endDateStr, days);
 
         if (fechasPrograma.length === 0) {
             app.alertError('Error', 'El rango de fechas y los días seleccionados no generan ninguna clase.');
@@ -725,7 +725,9 @@ const app = {
             nombre_clase: title,
             profesor: appState.user.nombre || appState.user.usuario,
             dias: days.join(', '),
-            fechas_programa: JSON.stringify(fechasPrograma)
+            fechas_programa: JSON.stringify(fechasPrograma),
+            fecha_inicio: startDateStr,
+            fecha_fin: endDateStr
         });
 
         if(res.status === 'success') {
@@ -852,32 +854,90 @@ const app = {
         const claseInfo = appState.globalData.clases.find(c => c.ID_Clase === idClase);
         if(!claseInfo) return;
 
+        // Limpiar días (quitar espacios si los hay)
+        const activeDays = (claseInfo.Dias || "").split(',').map(d => d.trim());
+        const daysOptions = [
+            {v: 'L', l: 'L'}, {v: 'M', l: 'M'}, {v: 'X', l: 'Mi'}, 
+            {v: 'J', l: 'J'}, {v: 'V', l: 'V'}, {v: 'S', l: 'S'}, {v: 'D', l: 'D'}
+        ];
+
+        let daysHtml = `<div class="flex flex-wrap gap-2 justify-center mt-2" id="swal-days-selector">`;
+        daysOptions.forEach(d => {
+            const isChecked = activeDays.includes(d.v);
+            daysHtml += `
+                <button type="button" data-value="${d.v}" onclick="this.classList.toggle('selected-day')" 
+                    class="day-btn px-4 py-2 rounded-xl border-2 transition-all font-bold text-sm ${isChecked ? 'selected-day' : 'border-gray-200 text-gray-400 bg-gray-50'}">
+                    ${d.l}
+                </button>`;
+        });
+        daysHtml += `</div>
+        <style>
+            .day-btn.selected-day { border-color: #002157; background-color: #eff6ff; color: #002157; }
+        </style>`;
+
         const { value: formValues } = await Swal.fire({
             title: 'Editar Materia',
             html:
-                `<label class="block text-left text-xs font-bold mb-1">Nombre de Materia</label>` +
-                `<input id="swal-input1" class="swal2-input" value="${claseInfo.Nombre}" placeholder="Nombre">` +
-                `<label class="block text-left text-xs font-bold mb-1 mt-3">Días (Separados por coma)</label>` +
-                `<input id="swal-input2" class="swal2-input" value="${claseInfo.Dias}" placeholder="Ej: L, M, J">`,
+                `<div class="text-left space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nombre de Materia</label>
+                        <input id="swal-name" class="swal2-input !m-0 !w-full" value="${claseInfo.Nombre}">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Fecha Inicio</label>
+                            <input type="date" id="swal-start" class="swal2-input !m-0 !w-full" value="${claseInfo.FechaInicio || ''}">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Fecha Fin</label>
+                            <input type="date" id="swal-end" class="swal2-input !m-0 !w-full" value="${claseInfo.FechaFin || ''}">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Días Impartidos</label>
+                        ${daysHtml}
+                    </div>
+                </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar Cambios',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#002157',
             focusConfirm: false,
             preConfirm: () => {
-                return [
-                    document.getElementById('swal-input1').value,
-                    document.getElementById('swal-input2').value
-                ]
+                const name = document.getElementById('swal-name').value;
+                const start = document.getElementById('swal-start').value;
+                const end = document.getElementById('swal-end').value;
+                const selectedDays = Array.from(document.querySelectorAll('#swal-days-selector .selected-day')).map(btn => btn.dataset.value);
+
+                if (!name || !start || !end || selectedDays.length === 0) {
+                    Swal.showValidationMessage('Complete todos los campos y elija al menos un día');
+                    return false;
+                }
+                return { name, start, end, selectedDays };
             }
         });
 
         if (formValues) {
-            const [nombre, dias] = formValues;
+            const { name, start, end, selectedDays } = formValues;
+            const fechas = app.generateSchedule(start, end, selectedDays);
+            
+            if (fechas.length === 0) {
+                app.alertError('Error', 'El rango de fechas y días no genera ninguna clase.');
+                return;
+            }
+
             const res = await app.apiCall({
                 accion: 'editarClase',
                 id_clase: idClase,
-                nombre_clase: nombre,
-                dias: dias
+                nombre_clase: name,
+                dias: selectedDays.join(', '),
+                fechas_programa: JSON.stringify(fechas),
+                fecha_inicio: start,
+                fecha_fin: end
             });
+
             if(res.status === 'success') {
-                app.alertSuccess('Materia Actualizada', 'Los cambios se guardaron en el servidor.');
+                app.alertSuccess('Actualizada', 'Materia y calendario actualizados correctamente.');
                 app.loadMasterData();
             } else {
                 app.alertError('Oops', res.message);

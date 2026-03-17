@@ -22,7 +22,7 @@ function doPost(e) {
   var sheetClases = ss.getSheetByName("Clases");
   if (!sheetClases) {
       sheetClases = ss.insertSheet("Clases");
-      sheetClases.appendRow(["ID_Clase", "Nombre_Clase", "Profesor", "Dias_Impartidos", "Estado", "Fechas_Programa"]);
+      sheetClases.appendRow(["ID_Clase", "Nombre_Clase", "Profesor", "Dias_Impartidos", "Estado", "Fechas_Programa", "Fecha_Inicio", "Fecha_Fin"]);
   }
 
   var sheetInscripciones = ss.getSheetByName("Inscripciones");
@@ -80,8 +80,8 @@ function doPost(e) {
   // 4. CREAR NUEVA CLASE CON PROGRAMA SEMANAL (MAESTRO)
   if (data.accion === "crearClase") {
     var idClase = "CL-" + new Date().getTime();
-    // Guardamos en Clases (A: ID_Clase, B: Nombre, C: Profesor, D: Horario/Dias, E: Estado, F: Fechas_Programa JSON)
-    sheetClases.appendRow([idClase, data.nombre_clase, data.profesor, data.dias, "Activa", data.fechas_programa || "[]"]);
+    // Guardamos en Clases (A: ID_Clase, B: Nombre, C: Profesor, D: Horario/Dias, E: Estado, F: Fechas_Programa JSON, G: Fecha_Inicio, H: Fecha_Fin)
+    sheetClases.appendRow([idClase, data.nombre_clase, data.profesor, data.dias, "Activa", data.fechas_programa || "[]", data.fecha_inicio || "", data.fecha_fin || ""]);
     return respuesta({ status: "success", message: "Clase creada correctamente", id_clase: idClase });
   }
 
@@ -132,6 +132,8 @@ function doPost(e) {
             if(data.nombre_clase) sheetClases.getRange(i + 1, 2).setValue(data.nombre_clase);
             if(data.dias) sheetClases.getRange(i + 1, 4).setValue(data.dias);
             if(data.fechas_programa) sheetClases.getRange(i + 1, 6).setValue(data.fechas_programa);
+            if(data.fecha_inicio) sheetClases.getRange(i + 1, 7).setValue(data.fecha_inicio);
+            if(data.fecha_fin) sheetClases.getRange(i + 1, 8).setValue(data.fecha_fin);
             return respuesta({ status: "success", message: "Clase actualizada." });
         }
     }
@@ -204,7 +206,11 @@ function doPost(e) {
     
     // Mapear arrays a objetos
     var clasesArr = todasClases.slice(1).map(function(c) {
-       return { ID_Clase: c[0], Nombre: c[1], Profesor: c[2], Dias: c[3], Estado: c[4] || "Activa", FechasPrograma: c[5] || "[]" };
+       return { 
+         ID_Clase: c[0], Nombre: c[1], Profesor: c[2], Dias: c[3], 
+         Estado: c[4] || "Activa", FechasPrograma: c[5] || "[]",
+         FechaInicio: c[6] || "", FechaFin: c[7] || "" 
+       };
     });
     
     var solicitudesArr = todasInscripciones.slice(1).map(function(ins) {
