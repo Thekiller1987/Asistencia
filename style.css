@@ -103,6 +103,38 @@ button, .cursor-pointer, select, input[type="submit"] {
     to { opacity: 1; }
 }
 
+/* Animación de línea de escaneo (Scanline) */
+@keyframes scan {
+    0% { top: 0%; }
+    100% { top: 100%; }
+}
+.scanline {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #FFB81C, transparent);
+    box-shadow: 0 0 15px 2px rgba(255, 184, 28, 0.5);
+    animation: scan 3s linear infinite;
+    z-index: 10;
+}
+
+/* Máscara de oscurecimiento para escáner */
+.scanner-mask {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    clip-path: polygon(
+        0% 0%, 0% 100%, 
+        calc(50% - 125px) 100%, 
+        calc(50% - 125px) calc(50% - 125px), 
+        calc(50% + 125px) calc(50% - 125px), 
+        calc(50% + 125px) calc(50% + 125px), 
+        calc(50% - 125px) calc(50% + 125px), 
+        calc(50% - 125px) 100%, 
+        100% 100%, 100% 0%
+    );
+}
+
 /* Prevenir zoom automático en iOS al enfocar inputs */
 @media screen and (max-width: 768px) {
     input, select, textarea {

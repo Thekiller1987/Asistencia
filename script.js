@@ -369,7 +369,8 @@ const app = {
         const html5QrCode = new Html5Qrcode("reader");
         appState.scanner = html5QrCode;
 
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        // Sincronizado con el cuadro visual de 250px en el HTML
+        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
 
         html5QrCode.start({ facingMode: "environment" }, config, async (decodedText) => {
             app.stopScanner();
