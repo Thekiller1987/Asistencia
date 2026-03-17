@@ -36,11 +36,17 @@ function doPost(e) {
     var registros = sheetUsuarios.getDataRange().getValues();
     for (var i = 1; i < registros.length; i++) {
       if (registros[i][7] == data.usuario && registros[i][8] == data.clave) {
-        // Validación eliminada: Dejamos que el frontend maneje la redirección basado en db_role
+        var dbRol = registros[i][2];
+        
+        // Validar que no entre a un rol cruzado, exceptuando al Super Admin que puede usar cualquier puerta
+        if (dbRol !== "Super Admin" && data.rol && dbRol !== data.rol) {
+            return respuesta({ status: "error", message: "Tu rol es " + dbRol + ". Por favor ingresa en el panel correcto." });
+        }
+        
         return respuesta({ 
           status: "success", 
           data: {
-             nombre: registros[i][0], correo: registros[i][1], rol: registros[i][2], 
+             nombre: registros[i][0], correo: registros[i][1], rol: dbRol, 
              carnet: registros[i][3], carrera: registros[i][4], anio: registros[i][5], usuario: registros[i][7],
              genero: registros[i][9] || "N/A"
           }
