@@ -100,6 +100,11 @@
                         <svg class="h-10 w-10 text-white mb-2 group-hover:text-unan-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         <span class="text-white font-medium text-sm">Maestro</span>
                     </button>
+                    
+                    <button onclick="app.selectRole('Super Admin')" class="group relative col-span-2 mt-2 bg-transparent hover:bg-white/10 border border-transparent hover:border-white/20 rounded-xl p-2 flex items-center justify-center transition-all opacity-60 hover:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        <span class="text-white font-medium text-xs tracking-wider uppercase">Acceso Administrativo</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -172,14 +177,28 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Género</label>
+                                <select id="reg-genero" required class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-unan-light outline-none bg-white">
+                                    <option value="" disabled selected>Elegir...</option>
+                                    <option value="Femenino">Femenino</option>
+                                    <option value="Masculino">Masculino</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Contraseña</label>
+                                <input type="password" id="reg-pass" required class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-unan-light focus:border-unan-light outline-none transition-all">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Carrera</label>
                                 <select id="reg-carrera" required class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-unan-light focus:border-unan-light outline-none transition-all bg-white">
-                                    <option value="" disabled selected>Selecciona una carrera...</option>
-                                    <option value="Ingeniería en Sistemas">Ingeniería en Sistemas</option>
-                                    <option value="Ingeniería Industrial">Ingeniería Industrial</option>
-                                    <option value="Ingeniería Civil">Ingeniería Civil</option>
+                                    <option value="" disabled selected>Selecciona carrera...</option>
+                                    <option value="Ingeniería en Sistemas">Ing Sistemas</option>
+                                    <option value="Ingeniería Industrial">Ing Industrial</option>
+                                    <option value="Ingeniería Civil">Ing Civil</option>
                                     <option value="Arquitectura">Arquitectura</option>
-                                    <option value="Administración de Empresas">Administración de Empresas</option>
+                                    <option value="Administración de Empresas">Admin Empresas</option>
                                 </select>
                             </div>
                             <div>
@@ -193,9 +212,6 @@
                                 </select>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Contraseña</label>
-                            <input type="password" id="reg-pass" required class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-unan-light focus:border-unan-light outline-none transition-all">
                         </div>
                         
                         <div class="mt-2">
@@ -242,13 +258,34 @@
                     <div class="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mb-4 text-unan-blue">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">Registro de Asistencia</h3>
-                    <p class="text-gray-500 text-sm mb-6 max-w-xs">Alinea el código QR del profesor en el recuadro para registrar tu asistencia del día.</p>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Asistencia Activa</h3>
+                    <p class="text-gray-500 text-sm mb-6 max-w-xs">Alinea el QR del profesor para marcar asistencia o únete a clases aprobadas.</p>
                     
-                    <button onclick="app.startScanner()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-semibold py-4 rounded-xl shadow-[0_8px_15px_-3px_rgba(0,33,87,0.3)] hover:shadow-[0_12px_20px_-3px_rgba(0,33,87,0.4)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center gap-2 text-lg">
+                    <button onclick="app.startScanner()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-semibold py-4 rounded-xl shadow-[0_8px_15px_-3px_rgba(0,33,87,0.3)] hover:shadow-[0_12px_20px_-3px_rgba(0,33,87,0.4)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center gap-2 text-lg mb-6">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Escanear QR de Hoy
                     </button>
+
+                    <!-- Student Classes Enrollment -->
+                    <div class="w-full border-t border-gray-100 pt-6 text-left">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold text-gray-800">Mis Clases</h4>
+                            <button onclick="app.loadStudentData()" class="text-unan-blue text-sm hover:underline">Actualizar</button>
+                        </div>
+                        <div id="student-classes-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto no-scrollbar">
+                            <p class="text-xs text-gray-400 text-center">Cargando tus clases...</p>
+                        </div>
+                        
+                        <div class="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Unirse a Nueva Clase</label>
+                            <div class="flex gap-2">
+                                <select id="student-class-select" class="flex-grow px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-1 focus:ring-unan-light outline-none bg-white">
+                                    <option value="">Seleccione una clase...</option>
+                                </select>
+                                <button onclick="app.requestEnrollment()" class="bg-unan-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-unan-light transition-colors whitespace-nowrap">Solicitar</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Scanner Container -->
@@ -276,58 +313,140 @@
                 </div>
 
                 <!-- Tabs -->
-                <div class="flex bg-gray-200 p-1 rounded-xl">
-                    <button onclick="app.switchMasterTab('dashboard')" id="tab-btn-dashboard" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-unan-blue transition-all">Dashboard</button>
-                    <button onclick="app.switchMasterTab('qr')" id="tab-btn-qr" class="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600 hover:text-unan-blue transition-all">Generar QR</button>
+                <div class="flex bg-gray-200 p-1 rounded-xl w-full overflow-x-auto no-scrollbar gap-1 custom-scroll">
+                    <button onclick="app.switchMasterTab('dashboard')" id="tab-btn-dashboard" class="flex-none px-3 py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-unan-blue transition-all whitespace-nowrap">Dashboard</button>
+                    <button onclick="app.switchMasterTab('clases')" id="tab-btn-clases" class="flex-none px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:text-unan-blue transition-all whitespace-nowrap">Clases</button>
+                    <button onclick="app.switchMasterTab('solicitudes')" id="tab-btn-solicitudes" class="flex-none px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:text-unan-blue transition-all relative whitespace-nowrap">
+                        Solicitudes <span id="badge-solicitudes" class="hidden absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                    </button>
+                    <button onclick="app.switchMasterTab('qr')" id="tab-btn-qr" class="flex-none px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:text-unan-blue transition-all whitespace-nowrap">Generar QR</button>
+                    <button onclick="app.switchMasterTab('auditoria')" id="tab-btn-auditoria" class="flex-none px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:text-unan-blue transition-all whitespace-nowrap text-unan-accent bg-blue-900 border-b-2 border-transparent">Auditoría Detallada</button>
                 </div>
 
                 <!-- Tab: Dashboard -->
                 <div id="tab-dashboard" class="flex flex-col gap-6">
+                    <!-- Dashboard Toolbar (Excel + Filter) -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <select id="dashboard-class-filter" onchange="app.renderDashboard()" class="w-full sm:w-auto px-4 py-2.5 text-sm rounded-xl border-2 border-transparent focus:border-unan-light outline-none transition-all bg-white shadow-sm font-bold text-unan-blue appearance-none pr-10 cursor-pointer" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23002157%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right .7rem top 50%; background-size: .65rem auto;">
+                            <option value="ALL">Todas las Clases Integradas</option>
+                        </select>
+                        
+                        <button onclick="app.exportToExcel()" class="w-full sm:w-auto bg-[#107c41] hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex justify-center items-center gap-2 transform active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            Exportar Excel
+                        </button>
+                    </div>
+
                     <!-- Chart Section -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 grid md:grid-cols-2 gap-6 items-center">
-                        <div class="w-full h-48 md:h-64 flex justify-center relative">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 grid md:grid-cols-2 gap-6 items-center overflow-hidden relative">
+                        <!-- Decorative background -->
+                        <div class="absolute -top-20 -right-20 w-48 h-48 bg-unan-accent rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+                        <div class="absolute -bottom-20 -left-20 w-48 h-48 bg-unan-light rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+
+                        <div class="w-full h-48 md:h-64 flex justify-center relative z-10">
                             <canvas id="attendance-chart"></canvas>
                         </div>
-                        <div class="flex flex-col justify-center">
-                            <h3 class="text-lg font-bold text-gray-800 mb-2">Asistencia General</h3>
-                            <p class="text-gray-500 text-sm mb-4">Porcentaje de asistencia total de las clases activas.</p>
+                        <div class="flex flex-col justify-center z-10">
+                            <h3 class="text-xl font-extrabold text-gray-800 mb-2">Asistencia Global</h3>
+                            <p class="text-gray-500 text-sm mb-6">Métrica en tiempo real calculada sobre el total de clases impartidas de la selección actual.</p>
                             
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                    <span class="block text-gray-400 text-xs font-medium mb-1">Total Alumnos</span>
-                                    <span class="text-2xl font-bold text-gray-800" id="stat-total-students">--</span>
+                                <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>
+                                        <span class="text-gray-400 text-xs font-bold uppercase tracking-wider">Alumnos</span>
+                                    </div>
+                                    <span class="text-3xl font-black text-gray-800" id="stat-total-students">--</span>
                                 </div>
-                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                    <span class="block text-unan-blue text-xs font-medium mb-1">Promedio General</span>
-                                    <span class="text-2xl font-bold text-unan-blue" id="stat-avg-attendance">--%</span>
+                                <div class="bg-gradient-to-br from-unan-light to-unan-blue p-4 rounded-2xl border border-blue-800 shadow-[0_4px_20px_-10px_rgba(0,33,87,0.4)] hover:shadow-lg transition-shadow text-white">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div>
+                                        <span class="text-blue-100 text-xs font-bold uppercase tracking-wider">Promedio</span>
+                                    </div>
+                                    <span class="text-3xl font-black text-white" id="stat-avg-attendance">--%</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Students Table -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h3 class="font-bold text-gray-800">Detalle por Alumno</h3>
-                            <button onclick="app.loadDashboard()" class="text-unan-blue hover:text-unan-light p-1 rounded-full hover:bg-blue-50 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <!-- Students Cards -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col pt-4 overflow-hidden relative">
+                        <div class="px-6 pb-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                            <h3 class="font-extrabold text-gray-800 text-lg">Estado de Matriculados</h3>
+                            <button onclick="app.loadMasterData()" class="text-unan-blue bg-blue-50 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-blue-100 flex items-center gap-1 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Refrescar
                             </button>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                                        <th class="p-4 font-semibold">Alumno</th>
-                                        <th class="p-4 font-semibold">Usuario</th>
-                                        <th class="p-4 font-semibold text-right">% Asistencia</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="students-table-body" class="divide-y divide-gray-100 text-sm">
-                                    <tr>
-                                        <td colspan="3" class="p-8 text-center text-gray-400">Cargando datos...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="students-cards-container" class="p-4 flex flex-col gap-3 min-h-[200px] bg-gray-50/50">
+                            <p class="text-center text-gray-400 py-8 font-medium">Cargando datos relacionales...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Clases -->
+                <div id="tab-clases" class="hidden flex-col gap-6 w-full">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h3 class="font-extrabold text-gray-800 text-xl mb-4 flex items-center gap-2">
+                            <span class="bg-unan-blue text-white w-8 h-8 rounded-lg flex justify-center items-center text-lg">+</span>
+                            Añadir Nueva Clase
+                        </h3>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Materia</label>
+                                <input type="text" id="new-class-name" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all" placeholder="Ej: Desarrollo Web Avanzado">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Inicio</label>
+                                    <input type="date" id="new-class-start-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Fin</label>
+                                    <input type="date" id="new-class-end-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 -mt-2">El sistema agendará clases sólo en los días seleccionados dentro de este rango.</p>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Días Impartidos</label>
+                                <div class="flex flex-wrap gap-2" id="class-days-selector">
+                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="L" class="hidden"> L</label>
+                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="M" class="hidden"> M</label>
+                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="X" class="hidden"> Mi</label>
+                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="J" class="hidden"> J</label>
+                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="V" class="hidden"> V</label>
+                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="S" class="hidden"> S</label>
+                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="D" class="hidden"> D</label>
+                                </div>
+                            </div>
+                            <button onclick="app.createClass()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-bold py-3.5 rounded-xl shadow-[0_4px_12px_rgba(0,33,87,0.3)] transition-all transform active:scale-95 flex justify-center items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> Guardar Clase en Servidor
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col pt-4">
+                        <h3 class="font-extrabold text-gray-800 text-lg px-6 pb-4 border-b border-gray-100">Mis Materias Activas</h3>
+                        <div id="my-classes-list" class="flex flex-col p-4 gap-4 bg-gray-50/50 min-h-[150px]">
+                            <p class="text-sm text-center text-gray-400 font-medium py-6">Sin clases activas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Solicitudes -->
+                <div id="tab-solicitudes" class="hidden flex-col gap-6">
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col pt-4 overflow-hidden">
+                        <div class="px-6 pb-4 flex justify-between items-center border-b border-gray-100 bg-white">
+                            <div>
+                                <h3 class="font-extrabold text-gray-800 text-lg inline-flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-unan-accent" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
+                                    Bandeja de Entrada
+                                </h3>
+                                <p class="text-xs text-gray-400 mt-1 font-medium">Estudiantes solicitando acceso</p>
+                            </div>
+                            <button onclick="app.loadMasterData()" class="text-unan-blue bg-blue-50 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-blue-100 transition">Refrescar</button>
+                        </div>
+                        <div id="requests-list" class="flex flex-col p-4 gap-3 bg-gray-50/50 min-h-[200px]">
+                             <p class="text-sm text-center text-gray-400 font-medium py-10">No hay nuevas solicitudes en este momento.</p>
                         </div>
                     </div>
                 </div>
@@ -341,10 +460,10 @@
                         <h3 class="text-xl font-bold text-gray-800 mb-2">Generador de Código QR</h3>
                         <p class="text-gray-500 text-sm mb-6 max-w-sm">Selecciona la clase actual y genera el código QR para que los alumnos marquen su asistencia.</p>
                         
-                        <div class="w-full max-w-sm mb-6">
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Clase</label>
-                            <select id="class-select" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-unan-light focus:border-unan-light outline-none transition-all bg-white shadow-sm">
-                                <option value="">Cargando clases...</option>
+                        <div class="w-full max-w-sm mb-6 text-left">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Seleccione una Clase Integrada</label>
+                            <select id="class-select" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue outline-none transition-all bg-white font-medium">
+                                <option value="">Cargando mis clases activas...</option>
                             </select>
                         </div>
                         
@@ -362,6 +481,93 @@
                     </div>
                 </div>
 
+                <!-- Tab: Auditoria -->
+                <div id="tab-auditoria" class="hidden flex-col gap-6">
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col pt-4 overflow-hidden">
+                        <div class="px-6 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 bg-white gap-4 w-full">
+                            <div>
+                                <h3 class="font-extrabold text-gray-800 text-lg inline-flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-unan-light" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                                    Programa de Clases
+                                </h3>
+                                <p class="text-xs text-gray-400 mt-1 font-medium">Asistencia detallada y auditoría de firmas</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                <select id="audit-class-select" onchange="app.renderAuditoria()" class="w-full sm:w-auto px-4 py-2 text-sm rounded-xl border-2 border-gray-200 focus:border-unan-light outline-none transition-all bg-gray-50 font-bold text-unan-blue cursor-pointer">
+                                    <option value="">Seleccione una Clase...</option>
+                                </select>
+                                <button onclick="app.exportAuditoriaToExcel()" class="w-full sm:w-auto bg-[#107c41] hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition-all flex justify-center items-center gap-2 transform active:scale-95">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg> Exportar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full overflow-x-auto relative min-h-[300px] bg-gray-50 custom-scroll border-b border-gray-200">
+                            <!-- MEGA TABLA -->
+                            <table class="w-full text-left border-collapse min-w-[1200px]" id="audit-table">
+                                <thead id="audit-thead" class="bg-unan-blue text-white sticky top-0 shadow-md z-20">
+                                    <tr>
+                                        <!-- Columnas Base -->
+                                        <th class="p-3 font-semibold text-xs uppercase sticky left-0 bg-unan-light z-30 shadow-[2px_0_5px_rgba(0,0,0,0.1)] min-w-[200px]">Alumno</th>
+                                        <th class="p-3 font-semibold text-xs uppercase">Carnet</th>
+                                        <th class="p-3 font-semibold text-xs uppercase">Género</th>
+                                        <th class="p-3 font-semibold text-xs uppercase min-w-[120px]">Firma Electrónica</th>
+                                        <th class="p-3 font-semibold text-xs uppercase text-center">% Global</th>
+                                        <!-- Semanas Dinamicas se inyectan acá -->
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-tbody" class="text-sm bg-white divide-y divide-gray-100">
+                                    <tr><td colspan="5" class="p-10 text-center text-gray-400">Seleccione una clase para ver el programa completo.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- VISTA 6: SUPER ADMIN -->
+        <section id="view-dashboard-superadmin" class="view-section min-h-full bg-unan-blue flex-col items-center pb-20 pt-10 px-4 w-full relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-unan-blue to-black opacity-80 mix-blend-multiply"></div>
+            
+            <div class="w-full max-w-md mx-auto flex flex-col gap-6 animate-fade-in-up relative z-10">
+                <div class="text-center mb-4">
+                    <img src="./logo.png" alt="Logo" class="h-16 w-auto mx-auto mb-3 filter drop-shadow brightness-0 invert">
+                    <h2 class="text-3xl font-black text-white px-4">Panel Super Admin</h2>
+                    <p class="text-gray-300 text-sm mt-1">Gestión Interna de Maestros</p>
+                </div>
+
+                <div class="bg-white/10 p-6 rounded-3xl shadow-xl border border-white/20 backdrop-blur-xl">
+                    <h3 class="font-extrabold text-white text-xl mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-unan-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                        Registrar Nuevo Maestro
+                    </h3>
+                    <form id="form-register-maestro" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Nombre Completo del Docente</label>
+                            <input type="text" id="admin-reg-name" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-unan-accent focus:ring-1 focus:ring-unan-accent outline-none transition-all placeholder-white/30" placeholder="Ej: Dra. María López">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Usuario (Login)</label>
+                                <input type="text" id="admin-reg-user" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-unan-accent outline-none" placeholder="mlopez">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Contraseña</label>
+                                <input type="password" id="admin-reg-pass" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-unan-accent outline-none" placeholder="••••••••">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-unan-accent hover:bg-yellow-400 text-unan-blue font-bold py-3.5 rounded-xl shadow-[0_4px_12px_rgba(255,184,28,0.4)] transition-all transform active:scale-95 flex justify-center items-center gap-2 mt-4">
+                            Autorizar Cuenta Docente
+                        </button>
+                    </form>
+                </div>
+                
+                <button onclick="app.showView('view-role-selection')" class="mx-auto text-gray-400 hover:text-white text-sm flex items-center justify-center gap-2 mt-4 py-2 px-6 rounded-full hover:bg-white/10 transition-all font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Volver a Inicio
+                </button>
             </div>
         </section>
 
