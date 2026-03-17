@@ -13,6 +13,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="./logo.png">
+    <link rel="icon" href="./logo.png">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -391,11 +392,19 @@
                 <!-- Tab: Clases -->
                 <div id="tab-clases" class="hidden flex-col gap-6 w-full">
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <h3 class="font-extrabold text-gray-800 text-xl mb-4 flex items-center gap-2">
-                            <span class="bg-unan-blue text-white w-8 h-8 rounded-lg flex justify-center items-center text-lg">+</span>
-                            Añadir Nueva Clase
-                        </h3>
-                        <div class="space-y-5">
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+                            <h3 class="font-extrabold text-gray-800 text-xl">Gestión de Clases</h3>
+                            <button onclick="document.getElementById('new-class-form-container').classList.toggle('hidden')" class="w-full sm:w-auto bg-unan-blue hover:bg-unan-light text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all flex justify-center items-center gap-2">
+                                <span class="bg-white/20 w-6 h-6 rounded-full flex justify-center items-center">+</span> Crear Nueva Clase
+                            </button>
+                        </div>
+                        <div id="new-class-form-container" class="hidden space-y-5 border-t border-gray-100 pt-6 mt-2 bg-gray-50 p-4 rounded-2xl">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-bold text-gray-700">Nueva Clase</h4>
+                                <button onclick="document.getElementById('new-class-form-container').classList.add('hidden')" class="text-gray-400 hover:text-red-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Materia</label>
                                 <input type="text" id="new-class-name" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all" placeholder="Ej: Desarrollo Web Avanzado">
@@ -433,6 +442,15 @@
                         <h3 class="font-extrabold text-gray-800 text-lg px-6 pb-4 border-b border-gray-100">Mis Materias Activas</h3>
                         <div id="my-classes-list" class="flex flex-col p-4 gap-4 bg-gray-50/50 min-h-[150px]">
                             <p class="text-sm text-center text-gray-400 font-medium py-6">Sin clases activas.</p>
+                        </div>
+                        <div class="p-4 border-t border-gray-100">
+                            <button id="btn-toggle-archived" onclick="app.toggleArchivedClasses()" class="w-full py-2 text-xs font-bold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition flex justify-center items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                                Ver Clases Archivadas
+                            </button>
+                        </div>
+                        <div id="archived-classes-list" class="hidden flex flex-col p-4 gap-4 bg-gray-200/50">
+                            <!-- Clases archivadas aqui -->
                         </div>
                     </div>
                 </div>
@@ -472,17 +490,25 @@
                             </select>
                         </div>
                         
-                        <button onclick="app.generateQR()" class="w-full max-w-sm bg-unan-blue hover:bg-unan-light text-white font-medium py-3 rounded-xl shadow-md transition-all">
-                            Mostrar Código QR
+                        <button onclick="app.generateQR()" class="w-full max-w-sm bg-unan-blue hover:bg-unan-light text-white font-medium py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                            Generar y Mostrar QR Gigante
                         </button>
                     </div>
 
-                    <div id="qr-result-container" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-col items-center animate-fade-in-up">
-                        <h4 class="font-bold text-gray-800 mb-4" id="qr-class-name">Clase</h4>
-                        <div class="bg-white p-4 rounded-xl border-2 border-dashed border-gray-300 shadow-inner flex justify-center items-center">
-                            <div id="qrcode" class="p-2"></div>
+                    <!-- Modal QR Pantalla Completa -->
+                    <div id="qr-modal-fullscreen" class="hidden fixed inset-0 z-[100] bg-black/95 flex-col items-center justify-center p-4 sm:p-8 backdrop-blur-md">
+                        <div class="w-full max-w-2xl bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center relative animate-fade-in-up">
+                            <button onclick="app.closeQRModal()" class="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-lg transform active:scale-95 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                            <h4 class="font-black text-gray-800 text-2xl sm:text-4xl mb-6 text-center" id="qr-class-name">Clase</h4>
+                            <div class="bg-white p-4 sm:p-10 rounded-3xl border-8 border-double border-unan-blue flex justify-center items-center mb-6 w-full max-w-[550px] aspect-square shadow-inner">
+                                <div id="qrcode" class="w-full h-full flex justify-center items-center"></div>
+                            </div>
+                            <p class="text-lg text-unan-blue font-bold text-center animate-pulse">¡Escanea ahora para marcar asistencia!</p>
+                            <p class="text-xs text-gray-400 mt-2">El código expira automáticamente por seguridad.</p>
                         </div>
-                        <p class="text-xs text-gray-400 mt-4 text-center max-w-xs">Pide a tus alumnos que escaneen este código desde su perfil en la app.</p>
                     </div>
                 </div>
 

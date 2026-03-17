@@ -95,15 +95,10 @@ const app = {
     selectRole: (role) => {
         appState.currentRole = role;
         
-        if (role === 'Super Admin') {
-            app.showView('view-dashboard-superadmin');
-            return;
-        }
-
         document.getElementById('login-title').innerText = `Ingreso ${role}`;
         
         const regContainer = document.getElementById('register-container');
-        if (role === 'Maestro') {
+        if (role === 'Maestro' || role === 'Super Admin') {
             regContainer.style.display = 'none';
         } else {
             regContainer.style.display = 'block';
@@ -498,13 +493,28 @@ const app = {
             myClasses.forEach(c => {
                 const isActive = c.Estado !== 'Finalizada';
                 myClassesList.innerHTML += `
-                    <div class="bg-white border rounded-2xl p-4 flex justify-between items-center shadow-sm">
-                        <div>
-                            <p class="font-bold text-gray-800">${c.Nombre}</p>
-                            <p class="text-xs text-gray-500 font-medium">Días: ${c.Dias || 'N/A'}</p>
-                            <p class="text-[10px] mt-1 font-bold ${isActive ? 'text-green-600' : 'text-gray-400'}">${c.Estado}</p>
+                    <div class="bg-white border rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-grow">
+                                <p class="font-bold text-gray-800 text-lg leading-tight">${c.Nombre}</p>
+                                <p class="text-xs text-gray-400 font-medium">Días: ${c.Dias || 'N/A'}</p>
+                                <p class="text-[10px] mt-1 font-bold ${isActive ? 'text-green-600' : 'text-gray-400'} uppercase tracking-wider">${c.Estado}</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="app.editClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-unan-blue transition rounded-lg hover:bg-blue-50" title="Editar Clase">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                </button>
+                                <button onclick="app.deleteClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-red-500 transition rounded-lg hover:bg-red-50" title="Eliminar Permanente">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            </div>
                         </div>
-                        ${isActive ? `<button onclick="app.finalizarClase('${c.ID_Clase}')" class="text-xs bg-red-50 text-red-600 font-bold px-3 py-2 rounded-lg hover:bg-red-100 transition">Archivar</button>` : ''}
+                        <div class="flex gap-2 border-t border-gray-100 pt-3">
+                            ${isActive ? 
+                                `<button onclick="app.finalizarClase('${c.ID_Clase}')" class="flex-1 text-[10px] bg-gray-100 text-gray-600 font-bold py-2 rounded-lg hover:bg-gray-200 transition">ARCHIVAR CLASE</button>` : 
+                                `<span class="flex-1 text-[10px] bg-gray-50 text-gray-300 font-bold py-2 rounded-lg text-center">CLASE FINALIZADA</span>`
+                            }
+                        </div>
                     </div>
                 `;
             });
@@ -772,22 +782,160 @@ const app = {
             return;
         }
 
-        const qrContainer = document.getElementById('qr-result-container');
+        const qrModal = document.getElementById('qr-modal-fullscreen');
         const qrCodeDiv = document.getElementById('qrcode');
         document.getElementById('qr-class-name').innerText = nombreClase;
         
         qrCodeDiv.innerHTML = '';
         const tokenDate = Date.now();
+        
+        // QR más robusto y grande
         new QRCode(qrCodeDiv, {
             text: JSON.stringify({ clase: idClase, token: tokenDate }),
-            width: 200, height: 200, colorDark : "#002157", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
+            width: 512, height: 512, 
+            colorDark : "#002157", colorLight : "#ffffff", 
+            correctLevel : QRCode.CorrectLevel.H
         });
 
-        qrContainer.classList.remove('hidden'); qrContainer.classList.add('flex');
+        qrModal.style.display = 'flex';
+        qrModal.classList.remove('hidden');
         app.playSound('success-sound');
     },
 
+    closeQRModal: () => {
+        const qrModal = document.getElementById('qr-modal-fullscreen');
+        qrModal.style.display = 'none';
+        qrModal.classList.add('hidden');
+    },
+
+    toggleArchivedClasses: () => {
+        const archivedDiv = document.getElementById('archived-classes-list');
+        const btn = document.getElementById('btn-toggle-archived');
+        const isHidden = archivedDiv.classList.contains('hidden');
+        
+        if (isHidden) {
+            archivedDiv.classList.remove('hidden');
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg> Ocultar Clases Archivadas`;
+            app.renderArchivedClasses();
+        } else {
+            archivedDiv.classList.add('hidden');
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg> Ver Clases Archivadas`;
+        }
+    },
+
+    renderArchivedClasses: () => {
+        const { clases } = appState.globalData;
+        const myArchived = clases.filter(c => (c.Profesor == appState.user.nombre || c.Profesor === appState.user.usuario) && c.Estado === 'Finalizada');
+        const div = document.getElementById('archived-classes-list');
+        
+        div.innerHTML = '';
+        if(myArchived.length === 0) {
+            div.innerHTML = '<p class="text-xs text-center text-gray-500 py-4 font-medium italic">No tienes clases archivadas.</p>';
+        } else {
+            myArchived.forEach(c => {
+                div.innerHTML += `
+                    <div class="bg-white/50 border border-gray-100 rounded-xl p-3 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-gray-600 text-sm">${c.Nombre}</p>
+                            <p class="text-[9px] text-gray-400">Finalizada</p>
+                        </div>
+                        <button onclick="app.deleteClass('${c.ID_Clase}')" class="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+    },
+
+    editClass: async (idClase) => {
+        const claseInfo = appState.globalData.clases.find(c => c.ID_Clase === idClase);
+        if(!claseInfo) return;
+
+        const { value: formValues } = await Swal.fire({
+            title: 'Editar Materia',
+            html:
+                `<label class="block text-left text-xs font-bold mb-1">Nombre de Materia</label>` +
+                `<input id="swal-input1" class="swal2-input" value="${claseInfo.Nombre}" placeholder="Nombre">` +
+                `<label class="block text-left text-xs font-bold mb-1 mt-3">Días (Separados por coma)</label>` +
+                `<input id="swal-input2" class="swal2-input" value="${claseInfo.Dias}" placeholder="Ej: L, M, J">`,
+            focusConfirm: false,
+            preConfirm: () => {
+                return [
+                    document.getElementById('swal-input1').value,
+                    document.getElementById('swal-input2').value
+                ]
+            }
+        });
+
+        if (formValues) {
+            const [nombre, dias] = formValues;
+            const res = await app.apiCall({
+                accion: 'editarClase',
+                id_clase: idClase,
+                nombre_clase: nombre,
+                dias: dias
+            });
+            if(res.status === 'success') {
+                app.alertSuccess('Materia Actualizada', 'Los cambios se guardaron en el servidor.');
+                app.loadMasterData();
+            } else {
+                app.alertError('Oops', res.message);
+            }
+        }
+    },
+
+    deleteClass: async (idClase) => {
+        const confirm = await Swal.fire({
+            title: '¿Eliminar para siempre?',
+            text: "Esta acción no se puede deshacer y borrará la clase del servidor.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#002157',
+            confirmButtonText: 'Sí, eliminar permanentemente',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (confirm.isConfirmed) {
+            const res = await app.apiCall({ accion: 'eliminarClase', id_clase: idClase });
+            if(res.status === 'success') {
+                app.alertSuccess('Borrado', 'La clase ha sido eliminada del sistema.');
+                app.loadMasterData();
+            } else {
+                app.alertError('Error', res.message);
+            }
+        }
+    },
+
+    toggleAttendance: async (idClase, usuario, fecha, currentEstado) => {
+        const nuevoEstado = currentEstado === 'Presente' ? 'Ausente' : 'Presente';
+        const res = await app.apiCall({
+            accion: 'modificarAsistenciaManual',
+            id_clase: idClase,
+            usuario_estudiante: usuario,
+            fecha: fecha,
+            nuevo_estado: nuevoEstado
+        });
+
+        if(res.status === 'success') {
+            app.playSound('success-sound');
+            // Recalcular datos locales sin hacer fetch (para que sea instantáneo)
+            const index = appState.globalData.asistencias.findIndex(a => a.Fecha === fecha && a.ID_Clase === idClase && a.Usuario === usuario);
+            if(nuevoEstado === 'Presente') {
+                if(index === -1) appState.globalData.asistencias.push({ Fecha: fecha, ID_Clase: idClase, Usuario: usuario, Estado: 'Presente' });
+            } else {
+                if(index !== -1) appState.globalData.asistencias.splice(index, 1);
+            }
+            app.renderAuditoria();
+            app.renderDashboard();
+        } else {
+            app.alertError('Error', res.message);
+        }
+    },
+
     renderAuditoria: () => {
+        const { clases, solicitudes, asistencias, estudiantes } = appState.globalData;
         const select = document.getElementById('audit-class-select');
         const idClase = select.value;
         const tbody = document.getElementById('audit-tbody');
@@ -798,113 +946,71 @@ const app = {
             return;
         }
 
-        const { clases, solicitudes, asistencias, estudiantes } = appState.globalData;
-        const claseObj = clases.find(c => c.ID_Clase === idClase);
-        
-        let fechasPrograma = [];
-        try { fechasPrograma = JSON.parse(claseObj.FechasPrograma || "[]"); } catch(e) {}
+        const claseInfo = clases.find(c => c.ID_Clase === idClase);
+        let fechasProg = [];
+        try { fechasProg = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
 
-        // Reset thead (keep first 5 static columns)
-        thead.innerHTML = `
+        // Header dinámico
+        let headerHtml = `
             <tr>
-                <th class="p-3 font-semibold text-[10px] uppercase sticky left-0 bg-unan-light z-30 shadow-[2px_0_5px_rgba(0,0,0,0.1)] min-w-[200px]">Alumno</th>
-                <th class="p-3 font-semibold text-[10px] uppercase">Carnet</th>
-                <th class="p-3 font-semibold text-[10px] uppercase text-center">Gen</th>
-                <th class="p-3 font-semibold text-[10px] uppercase min-w-[120px]">Firma Electrónica</th>
-                <th class="p-3 font-semibold text-[10px] uppercase text-center">% Glo</th>
-                ${fechasPrograma.map(f => `<th class="p-3 font-bold text-[10px] uppercase text-center border-l border-white/20 min-w-[80px]">${f.substring(0,5)}</th>`).join('')}
-            </tr>
+                <th class="p-3 font-semibold text-xs uppercase sticky left-0 bg-unan-light z-30 shadow-[2px_0_5px_rgba(0,0,0,0.1)] min-w-[200px]">Alumno</th>
+                <th class="p-3 font-semibold text-xs uppercase">Carnet</th>
+                <th class="p-3 font-semibold text-xs uppercase">Género</th>
+                <th class="p-3 font-semibold text-xs uppercase min-w-[120px]">Firma</th>
+                <th class="p-3 font-semibold text-xs uppercase text-center">%</th>
         `;
+        fechasProg.forEach(f => {
+            headerHtml += `<th class="p-3 font-bold text-[10px] text-center min-w-[80px] bg-blue-800 border-l border-white/10 italic">${f}</th>`;
+        });
+        headerHtml += `</tr>`;
+        thead.innerHTML = headerHtml;
 
-        const matriculasAprobadas = solicitudes.filter(s => s.ID_Clase === idClase && s.Estado === 'Aprobado');
-        const asistenciasClase = asistencias.filter(a => a.ID_Clase === idClase && a.Estado !== 'Ausente');
-        
-        tbody.innerHTML = '';
-        if (matriculasAprobadas.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${5 + fechasPrograma.length}" class="p-10 text-center text-gray-400">Sin alumnos matriculados.</td></tr>`;
+        // Body dinámico
+        const matriculados = solicitudes.filter(s => s.ID_Clase === idClase && s.Estado === 'Aprobado');
+        if(matriculados.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${5 + fechasProg.length}" class="p-10 text-center text-gray-400">No hay estudiantes aprobados en esta clase.</td></tr>`;
             return;
         }
 
-        matriculasAprobadas.forEach((sol, idx) => {
-            const stu = estudiantes.find(e => e.Usuario === sol.Usuario) || { Nombre: 'Desconocido', Carnet: 'N/A', Firma: '', Genero: 'N/A' };
-            const imgHtml = stu.Firma ? `<img src="${stu.Firma}" class="h-8 object-contain mix-blend-multiply filter contrast-125" alt="firma">` : '<span class="text-[10px] text-red-500">Sin Firma</span>';
-            const bgClass = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-
-            // Calculate percentage
-            const diasAsistidos = asistenciasClase.filter(a => a.Usuario === sol.Usuario && (a.Estado === 'Presente' || a.Estado === 'Justificado')).length;
-            const pct = fechasPrograma.length > 0 ? Math.round((diasAsistidos / fechasPrograma.length) * 100) : 100;
-            const pctColor = pct < 75 ? 'text-red-500 font-bold' : 'text-green-600 font-bold';
-
-            // Map each date to a cell
-            const checksHtml = fechasPrograma.map(f => {
-                const normal_fecha = f.replace(/^0+/, '').replace(/\/0+/g, '/');
-                
-                const assistToday = asistenciasClase.find(a => {
-                    return a.Usuario === sol.Usuario && 
-                           (a.Fecha === f || a.Fecha === normal_fecha || String(a.Fecha).includes(normal_fecha));
-                });
-                
-                let icon = '<span class="text-red-300">❌</span>';
-                let currentStatus = 'Ausente';
-                
-                if (assistToday) {
-                    if (assistToday.Estado === 'Presente') { icon = '✅'; currentStatus = 'Presente'; }
-                    else if (assistToday.Estado === 'Justificado') { icon = '⚠️'; currentStatus = 'Justificado'; }
-                    else if (assistToday.Estado === 'Ausente') { icon = '<span class="text-red-300">❌</span>'; currentStatus = 'Ausente'; }
-                }
-                
-                return `<td class="p-3 text-center border-l border-gray-100 cursor-pointer hover:bg-gray-200 hover:scale-110 transition-all font-bold text-lg" onclick="app.gestionarAsistenciaManual('${sol.Usuario}', '${f}', '${currentStatus}', '${idClase}')" title="Clic para modificar">${icon}</td>`;
-            }).join('');
-
-            tbody.innerHTML += `
-                <tr class="${bgClass} hover:bg-blue-50 transition-colors">
-                    <td class="p-3 sticky left-0 font-bold text-gray-800 text-xs ${bgClass} shadow-[2px_0_5px_rgba(0,0,0,0.02)]">${stu.Nombre}</td>
-                    <td class="p-3 text-gray-500 text-[10px] font-medium uppercase tracking-wider">${stu.Carnet}</td>
-                    <td class="p-3 text-center text-[10px] font-bold ${stu.Genero.startsWith('F') ? 'text-pink-500' : 'text-blue-500'}">${stu.Genero.charAt(0)}</td>
-                    <td class="p-3 flex justify-center items-center bg-gray-50 rounded m-1">${imgHtml}</td>
-                    <td class="p-3 text-center text-xs ${pctColor}">${pct}%</td>
-                    ${checksHtml}
-                </tr>
+        tbody.innerHTML = '';
+        matriculados.forEach(m => {
+            const eInfo = estudiantes.find(e => e.Usuario === m.Usuario) || { Nombre: m.NombreEstudiante, Carnet: m.CarnetEstudiante, Firma: '', Genero: 'N/A' };
+            const mAsistencias = asistencias.filter(a => a.ID_Clase === idClase && a.Usuario === m.Usuario && (a.Estado === 'Presente' || a.Estado === 'Justificado'));
+            const pct = fechasProg.length === 0 ? 100 : Math.round((mAsistencias.length / fechasProg.length) * 100);
+            
+            let rowHtml = `
+                <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
+                    <td class="p-3 font-bold text-gray-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">${eInfo.Nombre}</td>
+                    <td class="p-3 font-medium text-gray-500 text-xs">${eInfo.Carnet}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${eInfo.Genero === 'Femenino' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}">
+                            ${eInfo.Genero === 'Femenino' ? 'F' : 'M'}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        ${eInfo.Firma ? `<img src="${eInfo.Firma}" class="h-8 w-auto mix-blend-multiply opacity-80" alt="Firma">` : '<span class="text-[9px] text-gray-300">Sin firma</span>'}
+                    </td>
+                    <td class="p-3 text-center">
+                        <span class="font-black ${pct < 75 ? 'text-red-500' : 'text-green-600'}">${pct}%</span>
+                    </td>
             `;
-        });
-    },
 
-    gestionarAsistenciaManual: async (usuarioEstudiante, fecha, estadoActual, idClase) => {
-        const opciones = {
-            'Presente': '✅ Marcar como Presente',
-            'Justificado': '⚠️ Justificar Ausencia',
-            'Ausente': '❌ Marcar como Ausente'
-        };
-
-        const { value: nuevoEstado } = await Swal.fire({
-            title: 'Modificar Asistencia',
-            html: `<p class="text-sm mb-4">Alumno: <b>${usuarioEstudiante}</b><br>Fecha: <b>${fecha}</b><br>Estado Actual: <b class="text-unan-blue">${estadoActual}</b></p>`,
-            input: 'select',
-            inputOptions: opciones,
-            inputValue: estadoActual,
-            showCancelButton: true,
-            confirmButtonColor: '#002157',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Guardar Cambios',
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (nuevoEstado && nuevoEstado !== estadoActual) {
-            const res = await app.apiCall({
-                accion: 'modificarAsistenciaManual',
-                id_clase: idClase,
-                usuario_estudiante: usuarioEstudiante,
-                fecha: fecha,
-                nuevo_estado: nuevoEstado
+            fechasProg.forEach(f => {
+                const asist = asistencias.find(a => a.Fecha === f && a.ID_Clase === idClase && a.Usuario === m.Usuario);
+                const isPresent = asist && (asist.Estado === 'Presente' || asist.Estado === 'Justificado');
+                rowHtml += `
+                    <td class="p-3 text-center border-l border-gray-100 cursor-pointer hover:bg-white select-none transition-all" 
+                        onclick="app.toggleAttendance('${idClase}', '${m.Usuario}', '${f}', '${isPresent ? 'Presente' : 'Ausente'}')">
+                        <span class="transform transition-transform active:scale-150 block">
+                            ${isPresent ? '✅' : '❌'}
+                        </span>
+                    </td>
+                `;
             });
 
-            if (res.status === 'success') {
-                app.alertSuccess('Actualizado', `La asistencia ha sido guardada como: ${nuevoEstado}`);
-                app.loadMasterData(); 
-            } else {
-                app.alertError('Registro Fallido', res.message);
-            }
-        }
+            rowHtml += `</tr>`;
+            tbody.innerHTML += rowHtml;
+        });
     },
 
     exportAuditoriaToExcel: () => {
@@ -921,29 +1027,22 @@ const app = {
         }
 
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8 Excel
-
-        // Headers
         let headers = [];
         const theadCols = table.querySelectorAll('thead th');
         theadCols.forEach(th => headers.push(`"${th.innerText.replace(/"/g, '""')}"`));
         csvContent += headers.join(",") + "\r\n";
 
-        // Rows
         const tbodyRows = table.querySelectorAll('tbody tr');
         tbodyRows.forEach(tr => {
             let rowCols = [];
             const tds = tr.querySelectorAll('td');
             tds.forEach((td, idx) => {
-                // Ignore the signature image column when exporting to raw CSV text
-                if (idx === 3) {
-                    rowCols.push('"Dato Visual"');
-                } else {
+                if (idx === 3) rowCols.push('"Dato Visual"');
+                else {
                     let text = td.innerText.replace(/"/g, '""').replace(/(\r\n|\n|\r)/gm, " ");
-                    // Clean emojis for clean reports
                     if (text.includes('✅')) text = "Presente";
                     else if (text.includes('❌')) text = "Ausente";
                     else if (text.includes('⚠️')) text = "Justificado";
-                    
                     rowCols.push(`"${text}"`);
                 }
             });
@@ -953,11 +1052,9 @@ const app = {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        
         const { clases } = appState.globalData;
         const nombreClase = clases.find(c => c.ID_Clase === idClase)?.Nombre || "General";
         link.setAttribute("download", `AUDITORIA_${nombreClase.replace(/\s+/g, '_')}_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
-        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -968,41 +1065,33 @@ const app = {
             app.alertError('Alerta', 'No hay datos para exportar.');
             return;
         }
-
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Añadir BOM para Tildes
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
         csvContent += "Nombre,Usuario,Carnet,Días Asistidos,Total Días,Porcentaje\n";
-        
         appState.currentDashboardData.forEach(row => {
             csvContent += `"${row.nombre}","${row.usuario}","${row.carnet}",${row.presentes},${row.total},"${row.porcentaje}%"\n`;
         });
-
         const filterName = document.getElementById('dashboard-class-filter').options[document.getElementById('dashboard-class-filter').selectedIndex].text.replace(/[^a-z0-9]/gi, '_');
-        
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", `Reporte_Asistencia_${filterName}_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
-        document.body.appendChild(link); // Requerido por FF
+        document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         app.playSound('success-sound');
     },
 
-    // --- SIGNATURE PAD HELPER ---
     initSignaturePad: () => {
         const canvas = document.getElementById('signature-pad');
         if(!canvas) return;
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-
         const resizeCanvas = () => {
             const rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width; canvas.height = 128;
             ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.lineCap = "round";
         };
-        
         setTimeout(resizeCanvas, 500); window.addEventListener('resize', resizeCanvas);
-
         const getPos = (e) => {
             const rect = canvas.getBoundingClientRect();
             let x, y;
@@ -1010,16 +1099,13 @@ const app = {
             else { x = e.clientX - rect.left; y = e.clientY - rect.top; }
             return { x, y };
         };
-
         const startDraw = (e) => { e.preventDefault(); isDrawing = true; const { x, y } = getPos(e); ctx.beginPath(); ctx.moveTo(x, y); };
         const draw = (e) => { if (!isDrawing) return; e.preventDefault(); const { x, y } = getPos(e); ctx.lineTo(x, y); ctx.stroke(); };
         const stopDraw = () => { if (isDrawing) { ctx.closePath(); isDrawing = false; } };
-
         canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDraw); canvas.addEventListener('mouseleave', stopDraw);
         canvas.addEventListener('touchstart', startDraw, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stopDraw);
-
         document.getElementById('btn-clear-sig').addEventListener('click', app.clearSignature);
     },
 

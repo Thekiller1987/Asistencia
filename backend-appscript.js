@@ -123,6 +123,34 @@ function doPost(e) {
     return respuesta({ status: "error", message: "Clase no encontrada." });
   }
 
+  // 7.1 EDITAR CLASE (MAESTRO)
+  if (data.accion === "editarClase") {
+    var clasesRange = sheetClases.getDataRange();
+    var clases = clasesRange.getValues();
+    for (var i = 1; i < clases.length; i++) {
+        if(clases[i][0] == data.id_clase) {
+            if(data.nombre_clase) sheetClases.getRange(i + 1, 2).setValue(data.nombre_clase);
+            if(data.dias) sheetClases.getRange(i + 1, 4).setValue(data.dias);
+            if(data.fechas_programa) sheetClases.getRange(i + 1, 6).setValue(data.fechas_programa);
+            return respuesta({ status: "success", message: "Clase actualizada." });
+        }
+    }
+    return respuesta({ status: "error", message: "Clase no encontrada." });
+  }
+
+  // 7.2 ELIMINAR CLASE (MAESTRO)
+  if (data.accion === "eliminarClase") {
+    var clasesRange = sheetClases.getDataRange();
+    var clases = clasesRange.getValues();
+    for (var i = 1; i < clases.length; i++) {
+        if(clases[i][0] == data.id_clase) {
+            sheetClases.deleteRow(i + 1);
+            return respuesta({ status: "success", message: "Clase eliminada permanentemente." });
+        }
+    }
+    return respuesta({ status: "error", message: "Clase no encontrada." });
+  }
+
   // 8. MARCADO DE ASISTENCIA (QR TIMED)
   if (data.accion === "marcarAsistencia") {
     // Validar token de seguridad del QR (expira en 15 minutos)
