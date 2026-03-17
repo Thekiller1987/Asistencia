@@ -287,23 +287,23 @@
                             <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">Inscribirse en Materia</label>
                             
                             <!-- Opción 1: Lista -->
-                            <div class="flex gap-2 mb-3">
-                                <select id="student-class-select" class="flex-grow px-3 py-2.5 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-bold text-gray-700">
+                            <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                                <select id="student-class-select" class="flex-grow px-3 py-3 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-bold text-gray-700">
                                     <option value="">Buscar en la lista...</option>
                                 </select>
-                                <button onclick="app.requestEnrollment()" class="bg-unan-blue text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-unan-light transition-all shadow-sm">Solicitar</button>
+                                <button onclick="app.requestEnrollment()" class="bg-unan-blue text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-unan-light transition-all shadow-md active:scale-95">Solicitar</button>
                             </div>
 
-                            <div class="flex items-center gap-2 my-3">
+                            <div class="flex items-center gap-2 my-4">
                                 <span class="flex-grow h-px bg-gray-200"></span>
-                                <span class="text-[10px] font-black text-gray-300">O USA UN CÓDIGO</span>
+                                <span class="text-[10px] font-black text-gray-300 tracking-tighter shrink-0">O UNIRSE CON CÓDIGO</span>
                                 <span class="flex-grow h-px bg-gray-200"></span>
                             </div>
 
                             <!-- Opción 2: Código -->
-                            <div class="flex gap-2">
-                                <input type="text" id="class-code-input" maxlength="6" placeholder="EJ: A7B2X9" class="flex-grow px-3 py-2.5 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-black text-center tracking-widest placeholder:font-medium placeholder:tracking-normal">
-                                <button onclick="app.joinClassByCode()" class="bg-unan-accent text-unan-blue px-4 py-2.5 rounded-xl text-sm font-black hover:bg-yellow-400 transition-all shadow-sm">Unirse</button>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="text" id="class-code-input" maxlength="6" placeholder="EJ: A7B2X9" class="flex-grow px-3 py-3 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-black text-center tracking-widest placeholder:font-medium placeholder:tracking-normal">
+                                <button onclick="app.joinClassByCode()" class="bg-unan-accent text-unan-blue px-6 py-3 rounded-xl text-sm font-black hover:bg-yellow-400 transition-all shadow-md active:scale-95">UNIRSE</button>
                             </div>
                         </div>
                     </div>
@@ -681,5 +681,15 @@
     </audio>
 
     <script src="./script.js"></script>
+    <script>
+        // Registro del Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado', reg))
+                    .catch(err => console.log('Error registrando SW', err));
+            });
+        }
+    </script>
 </body>
 </html>

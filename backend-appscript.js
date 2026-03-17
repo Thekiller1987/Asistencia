@@ -190,14 +190,14 @@ function doPost(e) {
     return respuesta({ status: "error", message: "Clase no encontrada." });
   }
 
-  // 7.2 ELIMINAR CLASE (MAESTRO)
+  // 7.2 ELIMINAR CLASE (SOFT DELETE - MAESTRO)
   if (data.accion === "eliminarClase") {
     var clasesRange = sheetClases.getDataRange();
     var clases = clasesRange.getValues();
     for (var i = 1; i < clases.length; i++) {
         if(clases[i][0] == data.id_clase) {
-            sheetClases.deleteRow(i + 1);
-            return respuesta({ status: "success", message: "Clase eliminada permanentemente." });
+            sheetClases.getRange(i + 1, 5).setValue("Eliminada");
+            return respuesta({ status: "success", message: "Clase desactivada (Los estudiantes conservan su historial)." });
         }
     }
     return respuesta({ status: "error", message: "Clase no encontrada." });

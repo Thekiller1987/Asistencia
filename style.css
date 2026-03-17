@@ -80,3 +80,33 @@ div:where(.swal2-container) {
 #scanner-container video {
     object-fit: cover !important;
 }
+
+/* App-like feel: evitar selección de texto en controles */
+button, .cursor-pointer, select, input[type="submit"] {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Mejorar el scroll en iOS */
+.overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Animación de entrada suave para el modal gigante */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Prevenir zoom automático en iOS al enfocar inputs */
+@media screen and (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
+

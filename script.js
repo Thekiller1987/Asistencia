@@ -306,16 +306,25 @@ const app = {
                     }
                 }
 
+                let statusHtml = '';
+                if (claseInfo && claseInfo.Estado === 'Eliminada') {
+                    statusHtml = `<span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg bg-red-100 text-red-700">❌ Removida</span>`;
+                } else if (claseInfo && claseInfo.Estado === 'Finalizada') {
+                    statusHtml = `<span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg bg-gray-200 text-gray-600">📁 Archivada</span>`;
+                } else {
+                    statusHtml = `<span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg ${isAprobado ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}">
+                        ${isAprobado ? '✅ Inscrito' : '⏳ Pendiente'}
+                    </span>`;
+                }
+
                 listDiv.innerHTML += `
-                    <div class="flex flex-col p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div class="flex flex-col p-3 ${claseInfo && (claseInfo.Estado === 'Eliminada' || claseInfo.Estado === 'Finalizada') ? 'bg-gray-100/50 grayscale-[0.5]' : 'bg-gray-50'} rounded-xl border border-gray-100">
                         <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-bold text-gray-800 text-sm hover:text-unan-blue transition">${nombreClase}</p>
-                                <p class="text-[10px] text-gray-500 font-medium">Docente: ${claseInfo ? claseInfo.Profesor : 'N/A'}</p>
+                            <div class="max-w-[150px]">
+                                <p class="font-bold text-gray-800 text-sm truncate">${nombreClase}</p>
+                                <p class="text-[10px] text-gray-500 font-medium truncate">Docente: ${claseInfo ? claseInfo.Profesor : 'N/A'}</p>
                             </div>
-                            <span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg ${isAprobado ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}">
-                                ${isAprobado ? '✅ Inscrito' : '⏳ Pendiente'}
-                            </span>
+                            ${statusHtml}
                         </div>
                         ${asistenciaHtml}
                     </div>
@@ -323,8 +332,8 @@ const app = {
             });
         }
 
-        // Llenar Clases a las que NO he solicitado aún (y que estén Activas)
-        clases.filter(c => c.Estado !== 'Finalizada').forEach(c => {
+        // Llenar Clases a las que NO he solicitado aún (Solo las que están ACTIVAS)
+        clases.filter(c => c.Estado === 'Activa').forEach(c => {
             const yaSolicito = misSolicitudes.some(s => s.ID_Clase === c.ID_Clase);
             if(!yaSolicito) {
                 selectClase.innerHTML += `<option value="${c.ID_Clase}">${c.Nombre} (Prof. ${c.Profesor})</option>`;
@@ -472,7 +481,8 @@ const app = {
 
     renderMasterViews: () => {
         const { clases, solicitudes } = appState.globalData;
-        const myClasses = clases.filter(c => c.Profesor == appState.user.nombre || c.Profesor === appState.user.usuario); // Ajuste según tu backend
+        // El maestro no ve las clases con estado 'Eliminada'
+        const myClasses = clases.filter(c => (c.Profesor == appState.user.nombre || c.Profesor === appState.user.usuario) && c.Estado !== 'Eliminada'); 
 
         // Rellenar selects
         const dashboardSelect = document.getElementById('dashboard-class-filter');
