@@ -122,7 +122,9 @@ button, .cursor-pointer, select, input[type="submit"] {
 .scanner-mask {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+    pointer-events: none;
     clip-path: polygon(
         0% 0%, 0% 100%, 
         calc(50% - 125px) 100%, 
@@ -133,6 +135,16 @@ button, .cursor-pointer, select, input[type="submit"] {
         calc(50% - 125px) 100%, 
         100% 100%, 100% 0%
     );
+}
+
+#reader {
+    background: black !important;
+}
+
+#reader video {
+    object-fit: cover !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* Prevenir zoom automático en iOS al enfocar inputs */
