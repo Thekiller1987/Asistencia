@@ -342,7 +342,7 @@ const app = {
                 return;
             }
 
-            // Validar que el usuario intente ingresar por la vista correcta
+            const userData = snapshot.docs[0].data();
             const actualRole = userData.rol;
             const chosenView = appState.currentRole; // 'Estudiante', 'Maestro' o 'Super Admin'
 
