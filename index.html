@@ -333,14 +333,10 @@
                 </div>
 
                 <!-- Scanner Container -->
-                <div id="scanner-container" class="hidden fixed inset-0 z-50 overflow-hidden scanner-gradient">
-                    
-                    <!-- Wrapper para centrado total -->
-                    <div class="absolute inset-0 flex items-center justify-center p-6">
-                        
+                <div id="scanner-container" class="hidden fixed inset-0 z-[120] overflow-y-auto no-scrollbar scanner-gradient">
+                    <div class="min-h-screen flex flex-col items-center justify-center p-4 gap-12 sm:gap-16">
                         <!-- El Cuadro del Escáner (Mantiene todo unido) -->
-                        <div class="relative w-[280px] h-[280px] flex-shrink-0">
-                            
+                        <div class="relative w-[280px] h-[280px] flex-shrink-0 mt-8">
                             <!-- 1. El Lector de Cámara -->
                             <div id="reader" class="absolute inset-0 bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10"></div>
                             
@@ -362,20 +358,20 @@
                             </div>
                             
                             <!-- 3. Etiqueta Inferior -->
-                            <div class="absolute -bottom-20 left-0 right-0 flex justify-center">
+                            <div class="absolute -bottom-16 left-0 right-0 flex justify-center">
                                 <p class="text-white text-[11px] font-black bg-unan-blue/90 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 tracking-[0.2em] uppercase whitespace-nowrap shadow-2xl">
                                     Alinea el código QR
                                 </p>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Botón Cancelar (Fijo abajo) -->
-                    <div class="absolute bottom-12 left-0 right-0 flex justify-center px-6">
-                        <button onclick="app.stopScanner()" class="w-full max-w-xs bg-red-500/90 hover:bg-red-600 text-white rounded-2xl py-4 shadow-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/20 tracking-widest text-sm backdrop-blur-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                            CANCELAR
-                        </button>
+                        <!-- Botón Cancelar (Flujo normal) -->
+                        <div class="w-full flex justify-center px-6 pb-8">
+                            <button onclick="app.stopScanner()" class="w-full max-w-[280px] bg-red-500/90 hover:bg-red-600 text-white rounded-2xl py-4 shadow-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/20 tracking-widest text-sm backdrop-blur-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                                CANCELAR
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -470,48 +466,11 @@
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
                             <h3 class="font-extrabold text-gray-800 text-xl">Gestión de Clases</h3>
-                            <button onclick="document.getElementById('new-class-form-container').classList.toggle('hidden')" class="w-full sm:w-auto bg-unan-blue hover:bg-unan-light text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all flex justify-center items-center gap-2">
+                            <button onclick="document.getElementById('modal-new-class').classList.remove('hidden'); document.getElementById('modal-new-class').classList.add('flex');" class="w-full sm:w-auto bg-unan-blue hover:bg-unan-light text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all flex justify-center items-center gap-2">
                                 <span class="bg-white/20 w-6 h-6 rounded-full flex justify-center items-center">+</span> Crear Nueva Clase
                             </button>
                         </div>
-                        <div id="new-class-form-container" class="hidden space-y-5 border-t border-gray-100 pt-6 mt-2 bg-gray-50 p-4 rounded-2xl">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-bold text-gray-700">Nueva Clase</h4>
-                                <button onclick="document.getElementById('new-class-form-container').classList.add('hidden')" class="text-gray-400 hover:text-red-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Materia</label>
-                                <input type="text" id="new-class-name" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all" placeholder="Ej: Desarrollo Web Avanzado">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Inicio</label>
-                                    <input type="date" id="new-class-start-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Fin</label>
-                                    <input type="date" id="new-class-end-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-400 -mt-2">El sistema agendará clases sólo en los días seleccionados dentro de este rango.</p>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Días Impartidos</label>
-                                <div class="flex flex-wrap gap-2" id="class-days-selector">
-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="L" class="hidden"> L</label>
-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="M" class="hidden"> M</label>
-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="X" class="hidden"> Mi</label>
-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="J" class="hidden"> J</label>
-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="V" class="hidden"> V</label>
-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="S" class="hidden"> S</label>
-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="D" class="hidden"> D</label>
-                                </div>
-                            </div>
-                            <button onclick="app.createClass()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-bold py-3.5 rounded-xl shadow-[0_4px_12px_rgba(0,33,87,0.3)] transition-all transform active:scale-95 flex justify-center items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> Guardar Clase en Servidor
-                            </button>
-                        </div>
+                        <!-- Espacio reservado para las tarjetas de clase (el formulario fue movido a Modal) -->
                     </div>
                     
                     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col pt-4">
@@ -684,6 +643,53 @@
         </section>
 
     </main>
+
+    <!-- Modal: Crear Nueva Clase -->
+    <div id="modal-new-class" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-fade-in custom-scroll">
+        <div class="bg-white w-full max-w-lg p-6 rounded-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar">
+            <button onclick="document.getElementById('modal-new-class').classList.add('hidden'); document.getElementById('modal-new-class').classList.remove('flex');" class="absolute top-4 right-4 bg-gray-100 text-gray-500 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            
+            <h2 class="text-2xl font-black text-gray-800 mb-6">Crear Nueva Clase</h2>
+            
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Materia</label>
+                    <input type="text" id="new-class-name" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all" placeholder="Ej: Desarrollo Web Avanzado">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Inicio</label>
+                        <input type="date" id="new-class-start-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Fin</label>
+                        <input type="date" id="new-class-end-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
+                    </div>
+                </div>
+                <p class="text-[10px] sm:text-xs text-gray-400 -mt-2">El sistema agendará clases sólo en los días seleccionados dentro de este rango.</p>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Días Impartidos</label>
+                    <div class="flex flex-wrap gap-2" id="class-days-selector">
+                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="L" class="hidden"> L</label>
+                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="M" class="hidden"> M</label>
+                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="X" class="hidden"> Mi</label>
+                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="J" class="hidden"> J</label>
+                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="V" class="hidden"> V</label>
+                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="S" class="hidden"> S</label>
+                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="D" class="hidden"> D</label>
+                    </div>
+                </div>
+                
+                <div class="pt-4 border-t border-gray-100">
+                    <button onclick="app.createClass()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95 flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> Guardar Clase en Servidor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal: Editar Perfil Estudiante -->
     <div id="modal-edit-profile" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-fade-in">

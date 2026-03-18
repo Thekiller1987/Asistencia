@@ -84,33 +84,40 @@ const app = {
 
     // --- REAL-TIME SYNC (SOCKETS) ---
     startRealTimeSync: () => {
-        app.stopRealTimeSync(); // Limpiar previos
+        app.stopRealTimeSync(); 
 
-        // 1. Escuchar Clases (Global)
         const unsubClasses = db.collection('clases').onSnapshot(snapshot => {
             appState.globalData.clases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            app.renderClasses();
+            if (appState.user && appState.user.rol === 'maestro') app.renderMasterViews();
+            if (appState.user && appState.user.rol === 'estudiante') app.renderStudentClasses();
         });
 
-        // 2. Escuchar Mis Inscripciones
-        const unsubInscripciones = db.collection('inscripciones')
-            .where('id_estudiante', '==', appState.user.id)
-            .onSnapshot(snapshot => {
-                appState.globalData.solicitudes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                app.renderStudentClasses();
-            });
-
-        // 3. Escuchar Asistencias (Si es maestro)
-        if (appState.user.rol === 'maestro') {
-            const unsubAsistencias = db.collection('asistencias')
+        if (appState.user.rol === 'estudiante') {
+            const unsubInscripciones = db.collection('inscripciones')
+                .where('id_estudiante', '==', appState.user.id)
                 .onSnapshot(snapshot => {
-                    appState.globalData.asistencias = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // app.updateStats(); // Se implementará luego
+                    appState.globalData.solicitudes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    app.renderStudentClasses();
                 });
-            appState.listeners.push(unsubAsistencias);
+            appState.listeners.push(unsubClasses, unsubInscripciones);
+        } else if (appState.user.rol === 'maestro') {
+            const unsubSolicitudes = db.collection('inscripciones').onSnapshot(snapshot => {
+                appState.globalData.solicitudes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                app.renderMasterViews();
+            });
+            const unsubAsistencias = db.collection('asistencias').onSnapshot(snapshot => {
+                appState.globalData.asistencias = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const currentTab = document.querySelector('#tab-navigation-container .bg-white')?.id;
+                if(currentTab === 'tab-btn-dashboard') app.renderDashboard();
+                if(currentTab === 'tab-btn-auditoria') app.renderAuditoria();
+            });
+            const unsubEstudiantes = db.collection('users').where('rol', '==', 'estudiante').onSnapshot(snapshot => {
+                appState.globalData.estudiantes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            });
+            appState.listeners.push(unsubClasses, unsubSolicitudes, unsubAsistencias, unsubEstudiantes);
+        } else if(appState.user.rol === 'Super Admin'){
+            appState.listeners.push(unsubClasses);
         }
-
-        appState.listeners.push(unsubClasses, unsubInscripciones);
     },
 
     renderClasses: () => {
@@ -747,9 +754,18 @@ const app = {
                     <div class="bg-white border rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start">
                             <div class="flex-grow">
-                                <p class="font-bold text-gray-800 text-lg leading-tight">${c.Nombre}</p>
+                                <p class="font-bold text-gray-800 text-lg leading-tight w-full pr-8">${c.Nombre}</p>
                                 <p class="text-xs text-gray-400 font-medium">Días: ${c.Dias || 'N/A'}</p>
                                 <p class="text-[10px] mt-1 font-bold ${isActive ? 'text-green-600' : 'text-gray-400'} uppercase tracking-wider">${c.Estado}</p>
+                            </div>
+                            <!-- Action Buttons restored -->
+                            <div class="flex gap-2 shrink-0">
+                                <button onclick="app.editClass('${c.id}')" class="p-2 text-blue-400 hover:text-onan-blue hover:bg-blue-50 rounded-xl transition" title="Editar Materia">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                </button>
+                                <button onclick="app.deleteClass('${c.id}')" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition" title="Eliminar clase">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
                             </div>
                         </div>
                         <div class="flex gap-2 border-t border-gray-100 pt-3">
@@ -968,7 +984,14 @@ const app = {
             app.hideLoader();
             app.playSound('success-sound');
             app.alertSuccess('Clase Creada', 'La clase se sincronizó en tiempo real.');
+            
+            // Cerrar y resetear modal
+            document.getElementById('modal-new-class').classList.add('hidden');
+            document.getElementById('modal-new-class').classList.remove('flex');
             document.getElementById('new-class-name').value = '';
+            document.getElementById('new-class-start-date').value = '';
+            document.getElementById('new-class-end-date').value = '';
+            document.querySelectorAll('#class-days-selector input[type="checkbox"]').forEach(chk => chk.checked = false);
         } catch (error) {
             app.hideLoader();
             console.error(error);
@@ -1097,7 +1120,7 @@ const app = {
                             <p class="font-bold text-gray-600 text-sm">${c.Nombre}</p>
                             <p class="text-[9px] text-gray-400">Finalizada</p>
                         </div>
-                        <button onclick="app.deleteClass('${c.ID_Clase}')" class="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition">
+                        <button onclick="app.deleteClass('${c.id}')" class="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </div>
@@ -1107,7 +1130,7 @@ const app = {
     },
 
     editClass: async (idClase) => {
-        const claseInfo = appState.globalData.clases.find(c => c.ID_Clase === idClase);
+        const claseInfo = appState.globalData.clases.find(c => c.id === idClase);
         if(!claseInfo) return;
 
         // Limpiar días (quitar espacios si los hay)
@@ -1182,21 +1205,21 @@ const app = {
                 return;
             }
 
-            const res = await app.apiCall({
-                accion: 'editarClase',
-                id_clase: idClase,
-                nombre_clase: name,
-                dias: selectedDays.join(', '),
-                fechas_programa: JSON.stringify(fechas),
-                fecha_inicio: start,
-                fecha_fin: end
-            });
-
-            if(res.status === 'success') {
+            try {
+                app.showLoader('Actualizando...');
+                await db.collection('clases').doc(idClase).update({
+                    Nombre: name,
+                    Dias: selectedDays.join(', '),
+                    FechasPrograma: JSON.stringify(fechas),
+                    FechaInicio: start,
+                    FechaFin: end
+                });
+                app.hideLoader();
                 app.alertSuccess('Actualizada', 'Materia y calendario actualizados correctamente.');
-                app.loadMasterData();
-            } else {
-                app.alertError('Oops', res.message);
+            } catch (error) {
+                app.hideLoader();
+                console.error(error);
+                app.alertError('Oops', 'No se pudo actualizar la clase en Firebase.');
             }
         }
     },
@@ -1214,39 +1237,57 @@ const app = {
         });
 
         if (confirm.isConfirmed) {
-            const res = await app.apiCall({ accion: 'eliminarClase', id_clase: idClase });
-            if(res.status === 'success') {
+            try {
+                app.showLoader('Eliminando...');
+                await db.collection('clases').doc(idClase).update({
+                    Estado: 'Eliminada'
+                });
+                app.hideLoader();
                 app.alertSuccess('Borrado', 'La clase ha sido eliminada del sistema.');
-                app.loadMasterData();
-            } else {
-                app.alertError('Error', res.message);
+            } catch (error) {
+                app.hideLoader();
+                console.error(error);
+                app.alertError('Error', 'No se pudo eliminar la clase.');
             }
         }
     },
 
-    toggleAttendance: async (idClase, usuario, fecha, currentEstado) => {
+    toggleAttendance: async (idClase, idEstudiante, nombreEstudiante, fecha, currentEstado) => {
         const nuevoEstado = currentEstado === 'Presente' ? 'Ausente' : 'Presente';
-        const res = await app.apiCall({
-            accion: 'modificarAsistenciaManual',
-            id_clase: idClase,
-            usuario_estudiante: usuario,
-            fecha: fecha,
-            nuevo_estado: nuevoEstado
-        });
+        
+        try {
+            app.showLoader('Guardando...');
+            const query = await db.collection('asistencias')
+                .where('id_clase', '==', idClase)
+                .where('id_estudiante', '==', idEstudiante)
+                .where('fecha', '==', fecha)
+                .get();
 
-        if(res.status === 'success') {
-            app.playSound('success-sound');
-            // Recalcular datos locales sin hacer fetch (para que sea instantáneo)
-            const index = appState.globalData.asistencias.findIndex(a => a.Fecha === fecha && a.ID_Clase === idClase && a.Usuario === usuario);
-            if(nuevoEstado === 'Presente') {
-                if(index === -1) appState.globalData.asistencias.push({ Fecha: fecha, ID_Clase: idClase, Usuario: usuario, Estado: 'Presente' });
+            if (nuevoEstado === 'Presente') {
+                if (query.empty) {
+                    await db.collection('asistencias').add({
+                        id_clase: idClase,
+                        id_estudiante: idEstudiante,
+                        nombre_estudiante: nombreEstudiante,
+                        fecha: fecha,
+                        hora: 'Manual',
+                        estado: 'Presente',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
             } else {
-                if(index !== -1) appState.globalData.asistencias.splice(index, 1);
+                if (!query.empty) {
+                    const batch = db.batch();
+                    query.docs.forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+                }
             }
-            app.renderAuditoria();
-            app.renderDashboard();
-        } else {
-            app.alertError('Error', res.message);
+            app.hideLoader();
+            app.playSound('success-sound');
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo actualizar la asistencia.');
         }
     },
 
@@ -1262,7 +1303,7 @@ const app = {
             return;
         }
 
-        const claseInfo = clases.find(c => c.ID_Clase === idClase);
+        const claseInfo = clases.find(c => c.id === idClase);
         let fechasProg = [];
         try { fechasProg = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
 
@@ -1282,7 +1323,7 @@ const app = {
         thead.innerHTML = headerHtml;
 
         // Body dinámico
-        const matriculados = solicitudes.filter(s => s.ID_Clase === idClase && s.Estado === 'Aprobado');
+        const matriculados = solicitudes.filter(s => s.id_clase === idClase && s.estado === 'Aprobada');
         if(matriculados.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${5 + fechasProg.length}" class="p-10 text-center text-gray-400">No hay estudiantes aprobados en esta clase.</td></tr>`;
             return;
@@ -1290,28 +1331,28 @@ const app = {
 
         tbody.innerHTML = '';
         matriculados.forEach(m => {
-            const eInfo = estudiantes.find(e => e.Usuario === m.Usuario) || { Nombre: m.NombreEstudiante, Carnet: m.CarnetEstudiante, Firma: '', Genero: 'N/A' };
-            const mAsistencias = asistencias.filter(a => a.ID_Clase === idClase && a.Usuario === m.Usuario && (a.Estado === 'Presente' || a.Estado === 'Justificado'));
+            const eInfo = estudiantes.find(e => e.id === m.id_estudiante) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '', genero: 'N/A' };
+            const mAsistencias = asistencias.filter(a => a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
             const pct = fechasProg.length === 0 ? 100 : Math.min(100, Math.round((mAsistencias.length / fechasProg.length) * 100));
             
             let rowHtml = `
                 <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
                     <td class="p-3 font-bold text-gray-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                         <div class="flex items-center gap-2">
-                            <button onclick="app.expulsarEstudiante('${idClase}', '${m.Usuario}')" class="p-1 text-red-300 hover:text-red-500 hover:bg-red-50 rounded" title="Expulsar Estudiante">
+                            <button onclick="app.expulsarEstudiante('${m.id}')" class="p-1 text-red-300 hover:text-red-500 hover:bg-red-50 rounded" title="Expulsar Estudiante">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
                             </button>
-                            ${eInfo.Nombre}
+                            ${eInfo.nombre}
                         </div>
                     </td>
-                    <td class="p-3 font-medium text-gray-500 text-xs">${eInfo.Carnet}</td>
+                    <td class="p-3 font-medium text-gray-500 text-xs">${eInfo.carnet}</td>
                     <td class="p-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${eInfo.Genero === 'Femenino' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}">
-                            ${eInfo.Genero === 'Femenino' ? 'F' : 'M'}
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${eInfo.genero === 'Femenino' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}">
+                            ${eInfo.genero === 'Femenino' ? 'F' : 'M'}
                         </span>
                     </td>
                     <td class="p-3">
-                        ${eInfo.Firma ? `<img src="${eInfo.Firma}" class="h-8 w-auto mix-blend-multiply opacity-80" alt="Firma">` : '<span class="text-[9px] text-gray-300">Sin firma</span>'}
+                        ${eInfo.firma ? `<img src="${eInfo.firma}" class="h-8 w-auto mix-blend-multiply opacity-80" alt="Firma">` : '<span class="text-[9px] text-gray-300">Sin firma</span>'}
                     </td>
                     <td class="p-3 text-center">
                         <span class="font-black ${pct < 75 ? 'text-red-500' : 'text-green-600'}">${pct}%</span>
@@ -1319,11 +1360,11 @@ const app = {
             `;
 
             fechasProg.forEach(f => {
-                const asist = asistencias.find(a => a.Fecha === f && a.ID_Clase === idClase && a.Usuario === m.Usuario);
-                const isPresent = asist && (asist.Estado === 'Presente' || asist.Estado === 'Justificado');
+                const asist = asistencias.find(a => a.fecha === f && a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
+                const isPresent = !!asist;
                 rowHtml += `
                     <td class="p-3 text-center border-l border-gray-100 cursor-pointer hover:bg-white select-none transition-all" 
-                        onclick="app.toggleAttendance('${idClase}', '${m.Usuario}', '${f}', '${isPresent ? 'Presente' : 'Ausente'}')">
+                        onclick="app.toggleAttendance('${idClase}', '${m.id_estudiante}', '${eInfo.nombre.replace(/'/g, "\\'")}', '${f}', '${isPresent ? 'Presente' : 'Ausente'}')">
                         <span class="transform transition-transform active:scale-150 block">
                             ${isPresent ? '✅' : '❌'}
                         </span>
@@ -1336,7 +1377,7 @@ const app = {
         });
     },
 
-    expulsarEstudiante: async (idClase, usuarioEstudiante) => {
+    expulsarEstudiante: async (solicitudId) => {
         const confirm = await Swal.fire({
             title: '¿Expulsar Estudiante?',
             text: "El estudiante dejará de estar matriculado en esta clase.",
@@ -1347,16 +1388,15 @@ const app = {
         });
 
         if (confirm.isConfirmed) {
-            const res = await app.apiCall({
-                accion: 'expulsarEstudiante',
-                id_clase: idClase,
-                usuario_estudiante: usuarioEstudiante
-            });
-            if(res.status === 'success') {
+            try {
+                app.showLoader('Expulsando...');
+                await db.collection('inscripciones').doc(solicitudId).delete();
+                app.hideLoader();
                 app.playSound('success-sound');
-                app.loadMasterData();
-            } else {
-                app.alertError('Error', res.message);
+            } catch (error) {
+                app.hideLoader();
+                console.error(error);
+                app.alertError('Error', 'No se pudo expulsar al estudiante.');
             }
         }
     },
@@ -1401,22 +1441,22 @@ const app = {
         `;
 
         matriculados.forEach(m => {
-            const eInfo = estudiantes.find(e => e.usuario === m.usuario) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '' };
+            const eInfo = estudiantes.find(e => e.id === m.id_estudiante) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '' };
             fechasProg.forEach(f => {
                 const asist = asistencias.find(a => a.fecha === f && a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
-                const isPresent = asist; 
+                const isPresent = !!asist; 
                 const hora = asist ? asist.hora : '-';
                 const estadoTxt = isPresent ? 'Presente' : 'Ausente';
                 
                 html += `
                   <tr>
-                    <td>${eInfo.Nombre}</td>
-                    <td>${eInfo.Carnet}</td>
+                    <td>${eInfo.nombre}</td>
+                    <td>${eInfo.carnet}</td>
                     <td>${f}</td>
                     <td style="color: ${isPresent ? '#10b981' : '#ef4444'}; font-weight: bold;">${estadoTxt}</td>
                     <td>${hora}</td>
                     <td style="height: 60px; vertical-align: middle; text-align: center;">
-                        ${(isPresent && eInfo.Firma) ? `<img src="${eInfo.Firma}" width="120" height="45" style="display: block; margin: auto;">` : ''}
+                        ${(isPresent && eInfo.firma) ? `<img src="${eInfo.firma}" width="120" height="45" style="display: block; margin: auto;">` : ''}
                     </td>
                   </tr>
                 `;
