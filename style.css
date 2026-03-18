@@ -16,7 +16,7 @@ body.no-scroll {
     height: 100dvh;
     position: fixed;
     width: 100%;
-    touch-action: none; /* Prevenir scroll por toque */
+    touch-action: none;
 }
 
 /* Glass effect pane */
@@ -90,6 +90,8 @@ div:where(.swal2-container) {
 }
 #scanner-container video {
     object-fit: cover !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* App-like feel: evitar selección de texto en controles */
