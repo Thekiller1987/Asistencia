@@ -113,6 +113,16 @@ const app = {
         appState.listeners.push(unsubClasses, unsubInscripciones);
     },
 
+    renderClasses: () => {
+        if (appState.user.rol === 'maestro') {
+            app.renderMasterViews();
+        } else if (appState.user.rol === 'Super Admin') {
+            // Lógica para super admin si es necesaria
+        } else {
+            app.renderStudentClasses();
+        }
+    },
+
     stopRealTimeSync: () => {
         appState.listeners.forEach(unsub => unsub());
         appState.listeners = [];
@@ -248,11 +258,15 @@ const app = {
     },
 
     logout: () => {
+        app.stopRealTimeSync();
         appState.user = null;
         appState.currentRole = null;
         appState.globalData = { clases: [], solicitudes: [], asistencias: [], estudiantes: [] };
         
         if (appState.scanner) app.stopScanner();
+        
+        // Limpiar el body del bloqueo de scroll
+        document.body.classList.remove('no-scroll');
         
         app.showView('view-role-selection');
         app.playSound('success-sound');
@@ -340,11 +354,11 @@ const app = {
 
             // Navegar según Rol
             if (appState.user.rol === 'maestro') {
-                app.showView('view-dashboard-master');
+                app.loadMasterData();
             } else if (appState.user.rol === 'Super Admin') {
                 app.showView('view-dashboard-superadmin');
             } else {
-                app.showView('view-dashboard-student');
+                app.loadStudentData();
             }
 
         } catch (error) {
@@ -441,77 +455,88 @@ const app = {
 
     // --- MÓDULO ESTUDIANTE ---
     loadStudentData: async () => {
+        if (!appState.user) return;
+        
+        // Actualizar UI básica
         document.getElementById('student-name').innerText = appState.user.nombre || 'Estudiante';
         document.getElementById('student-carnet').innerText = `Carnet: ${appState.user.carnet || 'N/A'}`;
         document.getElementById('student-carrera').innerText = appState.user.carrera || 'Universidad';
+        
+        // Iniciales para el avatar
+        const initials = (appState.user.nombre || '?').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        const initialsEl = document.getElementById('student-initials');
+        if (initialsEl) initialsEl.innerText = initials;
+
         app.showView('view-dashboard-student');
         app.startRealTimeSync(); 
     },
 
     renderStudentClasses: () => {
         const { clases, solicitudes, asistencias } = appState.globalData;
-        const selectClase = document.getElementById('student-class-select');
         const listDiv = document.getElementById('student-classes-list');
+        const selectClase = document.getElementById('student-class-select');
         
-        // Mis Solicitudes / Matriculas (Filtrar por mi ID)
         const misSolicitudes = solicitudes.filter(s => s.id_estudiante === appState.user.id);
         
         listDiv.innerHTML = '';
         selectClase.innerHTML = '<option value="">Seleccione una clase...</option>';
 
         if (misSolicitudes.length === 0) {
-            listDiv.innerHTML = '<p class="text-xs text-gray-400 text-center font-medium py-3">No estás inscrito en ninguna clase aún.</p>';
+            listDiv.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10 opacity-40">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <p class="text-xs font-bold uppercase tracking-widest">Sin materias aún</p>
+                </div>
+            `;
         } else {
             misSolicitudes.forEach(sol => {
                 const claseInfo = clases.find(c => c.id === sol.id_clase);
-                const nombreClase = claseInfo ? claseInfo.Nombre : sol.nombre_clase;
                 const isAprobado = sol.estado === 'Aprobada';
+                const nombreClase = claseInfo ? claseInfo.Nombre : sol.nombre_clase;
                 
-                let asistenciaHtml = '';
+                let statsHtml = '';
                 if (isAprobado && claseInfo) {
-                    let fechasProgramadas = [];
-                    try { fechasProgramadas = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
+                    let prog = [];
+                    try { prog = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
+                    const misAsist = asistencias.filter(a => a.id_estudiante === appState.user.id && a.id_clase === sol.id_clase).length;
+                    const total = prog.length;
+                    const pct = total === 0 ? 0 : Math.round((misAsist/total)*100);
                     
-                    if(fechasProgramadas.length > 0) {
-                        const asistenciasMias = asistencias.filter(a => a.id_estudiante === appState.user.id && a.id_clase === sol.id_clase).length;
-                        const pct = Math.round((asistenciasMias / fechasProgramadas.length) * 100);
-                        const pctColor = pct < 75 ? 'text-red-500' : 'text-green-600';
-                        
-                        asistenciaHtml = `
-                            <div class="mt-2 flex items-center justify-between text-[10px] bg-white px-2 py-1 rounded">
-                                <span class="font-bold text-gray-500">Mi Asistencia:</span>
-                                <span class="font-extrabold ${pctColor}">${pct}% (${asistenciasMias}/${fechasProgramadas.length})</span>
+                    statsHtml = `
+                        <div class="mt-3">
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Asistencia: ${misAsist}/${total}</span>
+                                <span class="text-[10px] font-black ${pct < 75 ? 'text-red-500' : 'text-green-600'}">${pct}%</span>
                             </div>
-                        `;
-                    }
+                            <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full ${pct < 75 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'} transition-all duration-1000" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
                 }
 
-                let statusHtml = `
-                    <span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg ${isAprobado ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}">
-                        ${isAprobado ? '✅ Inscrito' : '⏳ Pendiente'}
-                    </span>
-                `;
-
                 listDiv.innerHTML += `
-                    <div class="flex flex-col p-3 ${claseInfo && claseInfo.Estado !== 'Activa' ? 'bg-gray-100/50 grayscale-[0.5]' : 'bg-gray-50'} rounded-xl border border-gray-100">
-                        <div class="flex justify-between items-center">
-                            <div class="max-w-[150px]">
-                                <p class="font-bold text-gray-800 text-sm truncate">${nombreClase}</p>
-                                <p class="text-[10px] text-gray-500 font-medium truncate">Docente: ${claseInfo ? claseInfo.Profesor : 'N/A'}</p>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all group">
+                        <div class="flex justify-between items-start">
+                            <div class="max-w-[70%]">
+                                <h5 class="font-black text-gray-800 text-sm leading-tight group-hover:text-unan-blue transition-colors truncate">${nombreClase}</h5>
+                                <p class="text-[10px] text-gray-400 font-bold mt-0.5 truncate uppercase">Prof. ${claseInfo ? claseInfo.Profesor : 'Asignando...'}</p>
                             </div>
-                            ${statusHtml}
+                            <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter ${isAprobado ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}">
+                                ${isAprobado ? 'ACTIVA' : 'PENDIENTE'}
+                            </span>
                         </div>
-                        ${asistenciaHtml}
+                        ${statsHtml}
                     </div>
                 `;
             });
         }
 
-        // Llenar Clases a las que NO he solicitado aún
+        // Catálogo para inscripción
         clases.filter(c => c.Estado === 'Activa').forEach(c => {
             const yaSolicito = misSolicitudes.some(s => s.id_clase === c.id);
             if(!yaSolicito) {
-                selectClase.innerHTML += `<option value="${c.id}">${c.Nombre} (Prof. ${c.Profesor})</option>`;
+                selectClase.innerHTML += `<option value="${c.id}" class="font-bold">${c.Nombre} (Prof. ${c.Profesor})</option>`;
             }
         });
     },
@@ -1326,11 +1351,11 @@ const app = {
         }
 
         const { clases, solicitudes, asistencias, estudiantes } = appState.globalData;
-        const claseInfo = clases.find(c => c.ID_Clase === idClase);
+        const claseInfo = clases.find(c => c.id === idClase);
         let fechasProg = [];
         try { fechasProg = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
         
-        const matriculados = solicitudes.filter(s => s.ID_Clase === idClase && s.Estado === 'Aprobado');
+        const matriculados = solicitudes.filter(s => s.id_clase === idClase && s.estado === 'Aprobada');
         if(matriculados.length === 0) {
             app.alertError('Alerta', 'No hay estudiantes inscritos.');
             return;
@@ -1358,11 +1383,11 @@ const app = {
         `;
 
         matriculados.forEach(m => {
-            const eInfo = estudiantes.find(e => e.Usuario === m.Usuario) || { Nombre: m.NombreEstudiante, Carnet: m.CarnetEstudiante, Firma: '' };
+            const eInfo = estudiantes.find(e => e.usuario === m.usuario) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '' };
             fechasProg.forEach(f => {
-                const asist = asistencias.find(a => a.Fecha === f && a.ID_Clase === idClase && a.Usuario === m.Usuario);
-                const isPresent = asist && (asist.Estado === 'Presente' || asist.Estado === 'Justificado');
-                const hora = asist ? asist.Hora : '-';
+                const asist = asistencias.find(a => a.fecha === f && a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
+                const isPresent = asist; 
+                const hora = asist ? asist.hora : '-';
                 const estadoTxt = isPresent ? 'Presente' : 'Ausente';
                 
                 html += `

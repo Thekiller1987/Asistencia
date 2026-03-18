@@ -240,28 +240,30 @@
         </section>
 
         <!-- VISTA 4: PANEL ESTUDIANTE -->
-        <section id="view-dashboard-student" class="view-section min-h-full bg-gray-50 flex-col items-center pb-20 pt-4 px-4 w-full">
-            <div class="w-full max-w-lg mx-auto flex flex-col gap-6 animate-fade-in-up">
+        <section id="view-dashboard-student" class="view-section min-h-screen bg-gray-50 flex-col items-center pb-24 pt-6 px-4 w-full overflow-y-auto no-scrollbar">
+            <div class="w-full max-w-xl mx-auto flex flex-col gap-6 animate-fade-in-up">
                 
-                <!-- Student Card -->
-                <div class="bg-gradient-to-r from-unan-blue to-unan-light rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-                    <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-10 blur-xl"></div>
-                    <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-unan-accent opacity-20 blur-xl"></div>
+                <!-- Student Card Premium -->
+                <div class="bg-[#002157] rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 rounded-full bg-blue-400/20 blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
                     
-                    <div class="relative z-10 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/50 shadow-inner backdrop-blur-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <div class="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+                        <div class="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 shadow-inner backdrop-blur-md">
+                            <span class="text-3xl font-black text-white/90" id="student-initials">?</span>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-center sm:justify-between">
+                                <h2 class="text-2xl font-black tracking-tight" id="student-name">Cargando...</h2>
+                                <button onclick="app.openEditProfile()" class="hidden sm:block p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all border border-white/10 backdrop-blur-md">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </button>
                             </div>
-                            <div>
-                                <h2 class="text-xl font-bold" id="student-name">Cargando...</h2>
-                                <p class="text-blue-100 text-sm" id="student-carnet">Carnet: ---</p>
-                                <span class="inline-block mt-1 px-2 py-0.5 bg-white/20 rounded text-xs font-medium backdrop-blur-sm" id="student-carrera">---</span>
+                            <p class="text-blue-200 font-bold text-sm" id="student-carnet">Carnet: ---</p>
+                            <div class="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
+                                <span class="px-2.5 py-1 bg-white/10 rounded-lg text-xs font-bold border border-white/10 backdrop-blur-md" id="student-carrera">---</span>
+                                <span class="px-2.5 py-1 bg-green-500/20 text-green-300 rounded-lg text-xs font-bold border border-green-500/20">Activo</span>
                             </div>
                         </div>
-                        <button onclick="app.openEditProfile()" class="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-all text-white shadow-sm border border-white/20 backdrop-blur-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        </button>
                     </div>
                 </div>
 
@@ -270,45 +272,61 @@
                     <div class="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mb-4 text-unan-blue">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">Asistencia Activa</h3>
-                    <p class="text-gray-500 text-sm mb-6 max-w-xs">Alinea el QR del profesor para marcar asistencia o únete a clases aprobadas.</p>
+                    <h3 class="text-xl font-black text-gray-800 mb-2">Asistencia Rápida</h3>
+                    <p class="text-gray-500 text-sm mb-8 leading-relaxed max-w-xs">Alinea el código QR proyectado por tu docente para registrarte al instante.</p>
                     
-                    <button onclick="app.startScanner()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-semibold py-4 rounded-xl shadow-[0_8px_15px_-3px_rgba(0,33,87,0.3)] hover:shadow-[0_12px_20px_-3px_rgba(0,33,87,0.4)] transition-all duration-300 transform hover:-translate-y-1 flex justify-center items-center gap-2 text-lg mb-6">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        Escanear QR de Hoy
+                    <button onclick="app.startScanner()" class="w-full bg-[#002157] hover:bg-[#002d7a] text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-900/20 hover:shadow-blue-900/30 transition-all duration-300 transform active:scale-95 flex justify-center items-center gap-3 text-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        INICIAR ESCÁNER
                     </button>
 
-                    <!-- Student Classes Enrollment -->
-                    <div class="w-full border-t border-gray-100 pt-6 text-left">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="font-bold text-gray-800">Mis Clases</h4>
-                            <button onclick="app.loadStudentData()" class="text-unan-blue text-sm hover:underline">Actualizar</button>
-                        </div>
-                        <div id="student-classes-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto no-scrollbar">
-                            <p class="text-xs text-gray-400 text-center">Cargando tus clases...</p>
-                        </div>
-                        
-                        <div class="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">Inscribirse en Materia</label>
-                            
-                            <!-- Opción 1: Lista -->
-                            <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                                <select id="student-class-select" class="flex-grow px-3 py-3 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-bold text-gray-700">
-                                    <option value="">Buscar en la lista...</option>
-                                </select>
-                                <button onclick="app.requestEnrollment()" class="bg-unan-blue text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-unan-light transition-all shadow-md active:scale-95">Solicitar</button>
+                    <!-- Grid for Classes and Enrollment -->
+                    <div class="w-full border-t border-gray-100 pt-8 mt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                            <!-- Column 1: My Classes -->
+                            <div class="flex flex-col">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h4 class="font-black text-gray-800 text-lg uppercase tracking-tight">Mis Materias</h4>
+                                    <button onclick="app.loadStudentData()" class="p-2 bg-gray-50 rounded-xl text-unan-blue hover:bg-blue-100 transition-all shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    </button>
+                                </div>
+                                <div id="student-classes-list" class="space-y-4 max-h-64 overflow-y-auto pr-2 no-scrollbar">
+                                    <p class="text-sm text-gray-400 text-center font-medium animate-pulse">Sincronizando clases...</p>
+                                </div>
                             </div>
 
-                            <div class="flex items-center gap-2 my-4">
-                                <span class="flex-grow h-px bg-gray-200"></span>
-                                <span class="text-[10px] font-black text-gray-300 tracking-tighter shrink-0">O UNIRSE CON CÓDIGO</span>
-                                <span class="flex-grow h-px bg-gray-200"></span>
-                            </div>
+                            <!-- Column 2: New Enrollment -->
+                            <div class="flex flex-col bg-gray-50/50 p-6 rounded-3xl border border-gray-100/50">
+                                <h4 class="font-black text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-6 text-center">NUEVAS INSCRIPCIONES</h4>
+                                
+                                <div class="space-y-6">
+                                    <!-- Search List -->
+                                    <div class="space-y-3">
+                                        <label class="text-[10px] font-bold text-gray-400 ml-1">BUSCAR EN LISTA</label>
+                                        <div class="flex gap-2">
+                                            <select id="student-class-select" class="flex-grow px-4 py-3.5 text-sm rounded-2xl border border-gray-200 focus:ring-2 focus:ring-unan-light outline-none bg-white font-bold text-gray-700 shadow-sm">
+                                                <option value="">Cargando catálogo...</option>
+                                            </select>
+                                            <button onclick="app.requestEnrollment()" class="bg-[#002157] text-white px-6 py-3.5 rounded-2xl text-sm font-black hover:bg-unan-light transition-all shadow-lg shadow-blue-900/10 active:scale-95">SOLICITAR</button>
+                                        </div>
+                                    </div>
 
-                            <!-- Opción 2: Código -->
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <input type="text" id="class-code-input" maxlength="6" placeholder="EJ: A7B2X9" class="flex-grow px-3 py-3 text-sm rounded-xl border border-gray-300 focus:ring-2 focus:ring-unan-light outline-none bg-white font-black text-center tracking-widest placeholder:font-medium placeholder:tracking-normal">
-                                <button onclick="app.joinClassByCode()" class="bg-unan-accent text-unan-blue px-6 py-3 rounded-xl text-sm font-black hover:bg-yellow-400 transition-all shadow-md active:scale-95">UNIRSE</button>
+                                    <div class="flex items-center gap-4 py-2">
+                                        <span class="flex-grow h-px bg-gray-200"></span>
+                                        <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest whitespace-nowrap">O USAR CÓDIGO</span>
+                                        <span class="flex-grow h-px bg-gray-200"></span>
+                                    </div>
+
+                                    <!-- Code Input -->
+                                    <div class="space-y-3">
+                                        <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">CÓDIGO DE ACCESO</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" id="class-code-input" maxlength="6" placeholder="A7B2X9" class="flex-grow px-4 py-3.5 text-sm rounded-2xl border border-gray-200 focus:ring-2 focus:ring-unan-light outline-none bg-white font-black text-center tracking-[0.3em] placeholder:tracking-normal placeholder:font-medium shadow-sm">
+                                            <button onclick="app.joinClassByCode()" class="bg-yellow-400 text-[#002157] px-6 py-3.5 rounded-2xl text-sm font-black hover:bg-yellow-500 transition-all shadow-lg shadow-yellow-500/20 active:scale-95">UNIRSE</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
