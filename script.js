@@ -99,7 +99,13 @@ const app = {
                     appState.globalData.solicitudes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     app.renderStudentClasses();
                 });
-            appState.listeners.push(unsubClasses, unsubInscripciones);
+            const unsubTusAsistencias = db.collection('asistencias')
+                .where('id_estudiante', '==', appState.user.id)
+                .onSnapshot(snapshot => {
+                    appState.globalData.asistencias = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    app.renderStudentClasses();
+                });
+            appState.listeners.push(unsubClasses, unsubInscripciones, unsubTusAsistencias);
         } else if (appState.user.rol === 'maestro') {
             const unsubSolicitudes = db.collection('inscripciones').onSnapshot(snapshot => {
                 appState.globalData.solicitudes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -523,9 +529,12 @@ const app = {
                 if (isAprobado && claseInfo) {
                     let prog = [];
                     try { prog = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
-                    const misAsist = asistencias.filter(a => a.id_estudiante === appState.user.id && a.id_clase === sol.id_clase).length;
+                    // Filtrar solo las presentes válidas
+                    const misAsist = asistencias.filter(a => a.id_estudiante === appState.user.id && a.id_clase === sol.id_clase && a.estado === 'Presente').length;
                     const total = prog.length;
-                    const pct = total === 0 ? 0 : Math.round((misAsist/total)*100);
+                    
+                    let actAsist = Math.min(misAsist, total); // safe check por bugs previos
+                    const pct = total === 0 ? 0 : Math.round((actAsist/total)*100);
                     
                     statsHtml = `
                         <div class="mt-3">
@@ -680,13 +689,34 @@ const app = {
                 return;
             }
 
-            // 3. Registrar Asistencia
+            // 3. Prevent Double Scanning and Format Exact Date
+            const now = new Date();
+            const dayStr = String(now.getDate()).padStart(2, '0');
+            const monStr = String(now.getMonth() + 1).padStart(2, '0');
+            const yrStr = now.getFullYear();
+            const todayStr = `${dayStr}/${monStr}/${yrStr}`;
+
+            const checkQuery = await db.collection('asistencias')
+                .where('id_clase', '==', idClase)
+                .where('id_estudiante', '==', appState.user.id)
+                .where('fecha', '==', todayStr)
+                .get();
+                
+            if (!checkQuery.empty) {
+                app.hideLoader();
+                app.playSound('success-sound');
+                Swal.fire({ icon: 'info', title: 'Ya Registrado', text: 'Tu asistencia para hoy ya fue guardada previamente.', confirmButtonColor: '#002157' });
+                return;
+            }
+
+            // 4. Registrar Asistencia Definitiva
             await db.collection('asistencias').add({
                 id_clase: idClase,
                 id_estudiante: appState.user.id,
                 nombre_estudiante: appState.user.nombre,
-                fecha: new Date().toLocaleDateString(),
-                hora: new Date().toLocaleTimeString(),
+                fecha: todayStr,
+                hora: now.toLocaleTimeString(),
+                estado: 'Presente',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
@@ -839,8 +869,8 @@ const app = {
             const nombreEst = matriculas[0].nombre_estudiante;
             const carnetEst = matriculas[0].carnet_estudiante;
             
-            // Asistencias del estudiante
-            const studentAsist = asistenciasClases.filter(a => a.id_estudiante === estId).length;
+            // Asistencias del estudiante en días programados (para evitar desfaces pasados de rosca)
+            const studentAsist = asistenciasClases.filter(a => a.id_estudiante === estId && a.estado === 'Presente').length;
 
             let totalDiasProgramados = 0;
             matriculas.forEach(m => {
@@ -850,7 +880,9 @@ const app = {
                 totalDiasProgramados += prog.length;
             });
 
-            let pct = totalDiasProgramados === 0 ? 100 : Math.min(100, Math.round((studentAsist / totalDiasProgramados) * 100));
+            // Evitar que el PCT sea mayor a 100 por bugs anteriores en base de datos de test
+            let actAsist = Math.min(studentAsist, totalDiasProgramados);
+            let pct = totalDiasProgramados === 0 ? 100 : Math.round((actAsist / totalDiasProgramados) * 100);
             
             alumnosData.push({
                 nombre: nombreEst,
