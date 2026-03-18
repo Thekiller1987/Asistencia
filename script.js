@@ -42,6 +42,7 @@ const app = {
         if(formAdmin) formAdmin.addEventListener('submit', app.handleRegisterMaestro);
         document.getElementById('btn-logout').addEventListener('click', app.logout);
         document.getElementById('btn-install').addEventListener('click', app.installPWA);
+        document.getElementById('form-edit-profile').addEventListener('submit', app.handleEditProfile);
         
         window.addEventListener('online', app.handleNetworkChange);
         window.addEventListener('offline', app.handleNetworkChange);
@@ -147,6 +148,58 @@ const app = {
             app.alertSuccess('¡Gracias!', 'La app se está instalando en tu dispositivo.');
         }
         app.deferredPrompt = null;
+    },
+    },
+
+    openEditProfile: () => {
+        document.getElementById('edit-name').value = appState.user.nombre;
+        document.getElementById('edit-user').value = appState.user.usuario;
+        document.getElementById('edit-carnet').value = appState.user.carnet;
+        document.getElementById('edit-carrera').value = appState.user.carrera;
+        
+        const modal = document.getElementById('modal-edit-profile');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    },
+
+    closeEditProfile: () => {
+        const modal = document.getElementById('modal-edit-profile');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    },
+
+    handleEditProfile: async (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('edit-name').value.trim();
+        const usuario = document.getElementById('edit-user').value.trim();
+        const carnet = document.getElementById('edit-carnet').value.trim();
+        const carrera = document.getElementById('edit-carrera').value;
+
+        try {
+            app.showLoader('Actualizando perfil...');
+            await db.collection('users').doc(appState.user.id).update({
+                nombre,
+                usuario,
+                carnet,
+                carrera
+            });
+
+            // Actualizar estado local
+            appState.user.nombre = nombre;
+            appState.user.usuario = usuario;
+            appState.user.carnet = carnet;
+            appState.user.carrera = carrera;
+
+            // Refrescar UI
+            app.loadStudentData();
+            app.hideLoader();
+            app.closeEditProfile();
+            app.alertSuccess('Perfil Actualizado', 'Tu información ha sido guardada con éxito.');
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudieron guardar los cambios.');
+        }
     },
 
     showView: (viewId) => {
