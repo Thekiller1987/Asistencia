@@ -1443,7 +1443,7 @@ const app = {
         }
     },
 
-    exportAuditoriaToExcel: () => {
+    exportAuditoriaToExcel: async () => {
         const idClase = document.getElementById('audit-class-select').value;
         if (!idClase) {
             app.alertError('Alerta', 'Seleccione una clase primero.');
@@ -1461,61 +1461,95 @@ const app = {
             return;
         }
 
-        // Generar archivo Excel basado en HTML (soporta imagenes)
-        let html = `
-          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-          <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${claseInfo.Nombre}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></xml><![endif]--></head>
-          <body style="font-family: Arial, sans-serif;">
-            <h2 style="color: #002157;">Auditoría de Asistencia - ${claseInfo.Nombre}</h2>
-            <p>Exportado el: ${new Date().toLocaleString()}</p>
-            <table border="1" cellpadding="5" cellspacing="0">
-              <thead>
-                <tr style="background-color: #002157; color: white; font-weight: bold;">
-                  <th>Estudiante</th>
-                  <th>Carnet</th>
-                  <th>Fecha Sesión</th>
-                  <th>Estado</th>
-                  <th>Hora de Marcado</th>
-                  <th style="width: 150px;">Firma Digital</th>
-                </tr>
-              </thead>
-              <tbody>
-        `;
+        app.showLoader('Generando Excel Nativos (Puede tardar)...');
 
-        matriculados.forEach(m => {
-            const eInfo = estudiantes.find(e => e.id === m.id_estudiante) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '' };
-            fechasProg.forEach(f => {
-                const asist = asistencias.find(a => a.fecha === f && a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
-                const isPresent = !!asist; 
-                const hora = asist ? asist.hora : '-';
-                const estadoTxt = isPresent ? 'Presente' : 'Ausente';
+        try {
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'App Asistencia UNAN';
+            const sheetName = claseInfo.Nombre.substring(0, 31).replace(/[\*\?\/\\\[\]]/g, '');
+            const sheet = workbook.addWorksheet(sheetName);
+
+            // Construir encabezados
+            sheet.columns = [
+                { header: 'Estudiante', key: 'estudiante', width: 35 },
+                { header: 'Carnet', key: 'carnet', width: 15 },
+                { header: 'Fecha Sesión', key: 'fecha', width: 15 },
+                { header: 'Estado', key: 'estado', width: 15 },
+                { header: 'Hora Marcado', key: 'hora', width: 16 },
+                { header: 'Firma Digital', key: 'firma', width: 30 }
+            ];
+
+            // Formato cabeceras
+            const headerRow = sheet.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF002157' } };
+            headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            let currentRowIdx = 2; // Empezamos en la fila 2 para datos
+
+            matriculados.forEach(m => {
+                const eInfo = estudiantes.find(e => e.id === m.id_estudiante) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '' };
                 
-                html += `
-                  <tr>
-                    <td>${eInfo.nombre}</td>
-                    <td>${eInfo.carnet}</td>
-                    <td>${f}</td>
-                    <td style="color: ${isPresent ? '#10b981' : '#ef4444'}; font-weight: bold;">${estadoTxt}</td>
-                    <td>${hora}</td>
-                    <td style="height: 60px; vertical-align: middle; text-align: center;">
-                        ${(isPresent && eInfo.firma) ? `<img src="${eInfo.firma}" width="120" height="45" style="display: block; margin: auto;">` : ''}
-                    </td>
-                  </tr>
-                `;
+                fechasProg.forEach(f => {
+                    const asist = asistencias.find(a => a.fecha === f && a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
+                    const isPresent = !!asist; 
+                    const hora = asist ? asist.hora : '-';
+                    const estadoTxt = isPresent ? 'Presente' : 'Ausente';
+                    
+                    const row = sheet.addRow({
+                        estudiante: eInfo.nombre,
+                        carnet: eInfo.carnet,
+                        fecha: f,
+                        estado: estadoTxt,
+                        hora: hora,
+                        firma: '' // Dejamos la celda libre para la imagen
+                    });
+
+                    // Estilizar fila
+                    row.height = 45; // Alto para la imagen
+                    row.alignment = { vertical: 'middle' };
+                    row.getCell('estado').font = { color: { argb: isPresent ? 'FF10B981' : 'FFEF4444' }, bold: true };
+                    row.getCell('fecha').alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell('estado').alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell('hora').alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    // Si hay firma y presente, insertar la imagen nativamente
+                    if (isPresent && eInfo.firma) {
+                        try {
+                            const imageId = workbook.addImage({
+                                base64: eInfo.firma,
+                                extension: 'png'
+                            });
+                            // Índices base-0 desde top left tl (col: 5 es F)
+                            sheet.addImage(imageId, {
+                                tl: { col: 5.2, row: currentRowIdx - 0.8 }, 
+                                ext: { width: 120, height: 35 }
+                            });
+                        } catch(err) { console.error('Error insertando imagen exceljs = ', err); }
+                    }
+
+                    currentRowIdx++;
+                });
             });
-        });
 
-        html += `</tbody></table></body></html>`;
+            // Generar y descargar binario directamente
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Auditoria_${claseInfo.Nombre.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `AUDITORIA_DETALLADA_${claseInfo.Nombre.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.xls`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        app.playSound('success-sound');
+            app.hideLoader();
+            app.playSound('success-sound');
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Generación fallida', 'Ocurrió un error generando el documento Excel de firmas.');
+        }
     },
 
     exportToExcel: () => {
