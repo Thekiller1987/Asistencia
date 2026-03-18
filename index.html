@@ -310,37 +310,50 @@
                 </div>
 
                 <!-- Scanner Container -->
-                <div id="scanner-container" class="hidden fixed inset-0 z-50 flex items-center justify-center overflow-hidden scanner-gradient">
+                <div id="scanner-container" class="hidden fixed inset-0 z-50 overflow-hidden scanner-gradient">
                     
-                    <!-- Guía de Escaneo (Cuadro Central Conteiene la Cámara) -->
-                    <div class="relative w-[300px] h-[300px] z-20 flex items-center justify-center">
+                    <!-- Wrapper para centrado total -->
+                    <div class="absolute inset-0 flex items-center justify-center p-6">
                         
-                        <!-- Lector de cámara (Contenido en el cuadro) -->
-                        <div id="reader" class="absolute inset-0 m-auto"></div>
+                        <!-- El Cuadro del Escáner (Mantiene todo unido) -->
+                        <div class="relative w-[280px] h-[280px]">
+                            
+                            <!-- 1. El Lector de Cámara -->
+                            <div id="reader" class="absolute inset-0 bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10"></div>
+                            
+                            <!-- 2. Capa de Guías (Encima de la cámara) -->
+                            <div class="absolute inset-0 z-10 pointer-events-none">
+                                <!-- Esquinas -->
+                                <div class="absolute -top-2 -left-2 w-14 h-14 border-t-[8px] border-l-[8px] border-unan-accent rounded-tl-[2rem]"></div>
+                                <div class="absolute -top-2 -right-2 w-14 h-14 border-t-[8px] border-r-[8px] border-unan-accent rounded-tr-[2rem]"></div>
+                                <div class="absolute -bottom-2 -left-2 w-14 h-14 border-b-[8px] border-l-[8px] border-unan-accent rounded-bl-[2rem]"></div>
+                                <div class="absolute -bottom-2 -right-2 w-14 h-14 border-b-[8px] border-r-[8px] border-unan-accent rounded-br-[2rem]"></div>
+                                
+                                <!-- Logo Watermark -->
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <img src="./logo.png" alt="Logo" class="w-24 h-24 object-contain grayscale invert brightness-200 opacity-40 drop-shadow-2xl">
+                                </div>
 
-                        <!-- Esquinas de Guía -->
-                        <div class="absolute -top-1 -left-1 w-12 h-12 border-t-[6px] border-l-[6px] border-unan-accent rounded-tl-3xl z-30 pointer-events-none"></div>
-                        <div class="absolute -top-1 -right-1 w-12 h-12 border-t-[6px] border-r-[6px] border-unan-accent rounded-tr-3xl z-30 pointer-events-none"></div>
-                        <div class="absolute -bottom-1 -left-1 w-12 h-12 border-b-[6px] border-l-[6px] border-unan-accent rounded-bl-3xl z-30 pointer-events-none"></div>
-                        <div class="absolute -bottom-1 -right-1 w-12 h-12 border-b-[6px] border-r-[6px] border-unan-accent rounded-br-3xl z-30 pointer-events-none"></div>
-                        
-                        <!-- Logo Centrado y Proporcional (Watermark) -->
-                        <img src="./logo.png" alt="Logo" class="w-24 h-24 object-contain grayscale invert brightness-200 opacity-40 z-30 pointer-events-none drop-shadow-xl">
+                                <!-- Línea de Escaneo -->
+                                <div class="scanline"></div>
+                            </div>
 
-                        <!-- Línea de Escaneo -->
-                        <div class="scanline z-30 pointer-events-none"></div>
-                        
-                        <!-- Texto Informativo -->
-                        <p class="absolute -bottom-24 left-1/2 transform -translate-x-1/2 text-white text-[10px] font-black bg-unan-blue/80 backdrop-blur-md px-6 py-2.5 rounded-full border border-white/20 tracking-[0.2em] uppercase whitespace-nowrap shadow-xl z-30">
-                            Alinea el código QR
-                        </p>
+                            <!-- 3. Etiqueta Inferior -->
+                            <div class="absolute -bottom-20 left-0 right-0 flex justify-center">
+                                <p class="text-white text-[10px] font-black bg-unan-blue/90 backdrop-blur-md px-6 py-2.5 rounded-full border border-white/20 tracking-[0.2em] uppercase whitespace-nowrap shadow-xl">
+                                    Alinea el código QR
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Botón Cerrar -->
-                    <button onclick="app.stopScanner()" class="absolute bottom-12 bg-red-500/90 hover:bg-red-600 text-white rounded-2xl px-12 py-4 shadow-2xl font-black flex items-center gap-3 z-30 transition-all active:scale-95 border border-white/20 tracking-widest text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                        CANCELAR
-                    </button>
+                    <!-- Botón Cancelar (Fijo abajo) -->
+                    <div class="absolute bottom-12 left-0 right-0 flex justify-center px-6">
+                        <button onclick="app.stopScanner()" class="w-full max-w-xs bg-red-500/90 hover:bg-red-600 text-white rounded-2xl py-4 shadow-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/20 tracking-widest text-sm backdrop-blur-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                            CANCELAR
+                        </button>
+                    </div>
                 </div>
 
             </div>
