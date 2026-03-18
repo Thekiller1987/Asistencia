@@ -149,7 +149,6 @@ const app = {
         }
         app.deferredPrompt = null;
     },
-    },
 
     openEditProfile: () => {
         document.getElementById('edit-name').value = appState.user.nombre;
@@ -202,7 +201,16 @@ const app = {
         }
     },
 
+
+
     showView: (viewId) => {
+        // Controlar scroll del body para "App Feel"
+        if (viewId === 'view-role-selection' || viewId === 'view-login') {
+            document.body.classList.add('no-scroll');
+        } else {
+            document.body.classList.remove('no-scroll');
+        }
+
         document.querySelectorAll('.view-section').forEach(el => {
             el.classList.remove('active');
             setTimeout(() => el.style.display = 'none', 300);
@@ -210,8 +218,10 @@ const app = {
         
         setTimeout(() => {
             const view = document.getElementById(viewId);
-            view.style.display = 'flex';
-            setTimeout(() => view.classList.add('active'), 50);
+            if (view) {
+                view.style.display = 'flex';
+                setTimeout(() => view.classList.add('active'), 50);
+            }
         }, 300);
 
         const nav = document.getElementById('main-nav');
