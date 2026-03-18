@@ -342,7 +342,26 @@ const app = {
                 return;
             }
 
-            const userData = snapshot.docs[0].data();
+            // Validar que el usuario intente ingresar por la vista correcta
+            const actualRole = userData.rol;
+            const chosenView = appState.currentRole; // 'Estudiante', 'Maestro' o 'Super Admin'
+
+            if (chosenView === 'Estudiante' && actualRole !== 'estudiante') {
+                app.hideLoader();
+                app.alertError('Acceso Denegado', 'Esta cuenta es de nivel DOCENTE. Por favor, ingresa por la vista de Maestro.');
+                return;
+            }
+            if (chosenView === 'Maestro' && actualRole !== 'maestro') {
+                app.hideLoader();
+                app.alertError('Acceso Denegado', 'Esta cuenta es de nivel ESTUDIANTE. Por favor, ingresa por la vista de Estudiante.');
+                return;
+            }
+            if (chosenView === 'Super Admin' && actualRole !== 'Super Admin') {
+                app.hideLoader();
+                app.alertError('Acceso Denegado', 'No tienes permisos de Administrador.');
+                return;
+            }
+
             appState.user = { id: snapshot.docs[0].id, ...userData };
             
             app.hideLoader();

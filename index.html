@@ -304,11 +304,11 @@
                                     <!-- Search List -->
                                     <div class="space-y-3">
                                         <label class="text-[10px] font-bold text-gray-400 ml-1">BUSCAR EN LISTA</label>
-                                        <div class="flex gap-2">
-                                            <select id="student-class-select" class="flex-grow px-4 py-3.5 text-sm rounded-2xl border border-gray-200 focus:ring-2 focus:ring-unan-light outline-none bg-white font-bold text-gray-700 shadow-sm">
+                                        <div class="flex flex-col sm:flex-row gap-2">
+                                            <select id="student-class-select" class="w-full sm:flex-grow px-4 py-3.5 text-sm rounded-2xl border border-gray-200 focus:ring-2 focus:ring-unan-light outline-none bg-white font-bold text-gray-700 shadow-sm">
                                                 <option value="">Cargando catálogo...</option>
                                             </select>
-                                            <button onclick="app.requestEnrollment()" class="bg-[#002157] text-white px-6 py-3.5 rounded-2xl text-sm font-black hover:bg-unan-light transition-all shadow-lg shadow-blue-900/10 active:scale-95">SOLICITAR</button>
+                                            <button onclick="app.requestEnrollment()" class="w-full sm:w-auto flex-shrink-0 bg-[#002157] text-white px-6 py-3.5 rounded-2xl text-sm font-black hover:bg-unan-light transition-all shadow-lg shadow-blue-900/10 active:scale-95">SOLICITAR</button>
                                         </div>
                                     </div>
 
@@ -321,9 +321,9 @@
                                     <!-- Code Input -->
                                     <div class="space-y-3">
                                         <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">CÓDIGO DE ACCESO</label>
-                                        <div class="flex gap-2">
-                                            <input type="text" id="class-code-input" maxlength="6" placeholder="A7B2X9" class="flex-grow px-4 py-3.5 text-sm rounded-2xl border border-gray-200 focus:ring-2 focus:ring-unan-light outline-none bg-white font-black text-center tracking-[0.3em] placeholder:tracking-normal placeholder:font-medium shadow-sm">
-                                            <button onclick="app.joinClassByCode()" class="bg-yellow-400 text-[#002157] px-6 py-3.5 rounded-2xl text-sm font-black hover:bg-yellow-500 transition-all shadow-lg shadow-yellow-500/20 active:scale-95">UNIRSE</button>
+                                        <div class="flex flex-col sm:flex-row gap-2">
+                                            <input type="text" id="class-code-input" maxlength="6" placeholder="A7B2X9" class="w-full sm:flex-grow px-4 py-3.5 text-sm rounded-2xl border border-gray-200 focus:ring-2 focus:ring-unan-light outline-none bg-white font-black text-center tracking-[0.3em] placeholder:tracking-normal placeholder:font-medium shadow-sm">
+                                            <button onclick="app.joinClassByCode()" class="w-full sm:w-auto flex-shrink-0 bg-yellow-400 text-[#002157] px-6 py-3.5 rounded-2xl text-sm font-black hover:bg-yellow-500 transition-all shadow-lg shadow-yellow-500/20 active:scale-95">UNIRSE</button>
                                         </div>
                                     </div>
                                 </div>

@@ -16,6 +16,7 @@ body.no-scroll {
     height: 100dvh;
     position: fixed;
     width: 100%;
+    touch-action: none; /* Prevenir scroll por toque */
 }
 
 /* Glass effect pane */
@@ -169,10 +170,13 @@ button, .cursor-pointer, select, input[type="submit"] {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
-    position: relative;
+    overflow: hidden !important;
+    position: fixed; /* Cambiado a fixed para asegurar contención */
+    top: 0;
+    left: 0;
     padding: 1.5rem;
     background-color: #002157; /* Unan Blue background */
+    z-index: 50;
 }
 
 /* Evitar que el teclado móvil empuje el contenido fuera de vista en pantallas muy pequeñas */
