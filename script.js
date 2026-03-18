@@ -1470,14 +1470,19 @@ const app = {
             const sheet = workbook.addWorksheet(sheetName);
 
             // Construir encabezados
-            sheet.columns = [
+            const baseColumns = [
                 { header: 'Estudiante', key: 'estudiante', width: 35 },
                 { header: 'Carnet', key: 'carnet', width: 15 },
-                { header: 'Fecha Sesión', key: 'fecha', width: 15 },
-                { header: 'Estado', key: 'estado', width: 15 },
-                { header: 'Hora Marcado', key: 'hora', width: 16 },
-                { header: 'Firma Digital', key: 'firma', width: 30 }
+                { header: 'Género', key: 'genero', width: 10 },
+                { header: 'Firma Digital', key: 'firma', width: 30 },
+                { header: '%', key: 'pct', width: 8 }
             ];
+
+            fechasProg.forEach(f => {
+                baseColumns.push({ header: f, key: `f_${f}`, width: 12 });
+            });
+
+            sheet.columns = baseColumns;
 
             // Formato cabeceras
             const headerRow = sheet.getRow(1);
@@ -1488,48 +1493,73 @@ const app = {
             let currentRowIdx = 2; // Empezamos en la fila 2 para datos
 
             matriculados.forEach(m => {
-                const eInfo = estudiantes.find(e => e.id === m.id_estudiante) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '' };
+                const eInfo = estudiantes.find(e => e.id === m.id_estudiante) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '', genero: 'N/A' };
                 
+                // Calculamos porcentaje y recolectamos asistencia por fecha
+                let numPresentes = 0;
+                let hasFirma = false;
+                let asistenciasMap = {};
+
                 fechasProg.forEach(f => {
                     const asist = asistencias.find(a => a.fecha === f && a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
-                    const isPresent = !!asist; 
-                    const hora = asist ? asist.hora : '-';
-                    const estadoTxt = isPresent ? 'Presente' : 'Ausente';
-                    
-                    const row = sheet.addRow({
-                        estudiante: eInfo.nombre,
-                        carnet: eInfo.carnet,
-                        fecha: f,
-                        estado: estadoTxt,
-                        hora: hora,
-                        firma: '' // Dejamos la celda libre para la imagen
-                    });
-
-                    // Estilizar fila
-                    row.height = 45; // Alto para la imagen
-                    row.alignment = { vertical: 'middle' };
-                    row.getCell('estado').font = { color: { argb: isPresent ? 'FF10B981' : 'FFEF4444' }, bold: true };
-                    row.getCell('fecha').alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell('estado').alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell('hora').alignment = { horizontal: 'center', vertical: 'middle' };
-
-                    // Si hay firma y presente, insertar la imagen nativamente
-                    if (isPresent && eInfo.firma) {
-                        try {
-                            const imageId = workbook.addImage({
-                                base64: eInfo.firma,
-                                extension: 'png'
-                            });
-                            // Índices base-0 desde top left tl (col: 5 es F)
-                            sheet.addImage(imageId, {
-                                tl: { col: 5.2, row: currentRowIdx - 0.8 }, 
-                                ext: { width: 120, height: 35 }
-                            });
-                        } catch(err) { console.error('Error insertando imagen exceljs = ', err); }
+                    if (asist && (asist.estado === 'Presente' || asist.hora !== '-')) { 
+                        numPresentes++;
+                        hasFirma = true;
+                        asistenciasMap[`f_${f}`] = 'Presente';
+                    } else {
+                        asistenciasMap[`f_${f}`] = 'Ausente';
                     }
-
-                    currentRowIdx++;
                 });
+
+                const pctNum = fechasProg.length === 0 ? 100 : Math.min(100, Math.round((numPresentes / fechasProg.length) * 100));
+
+                const rowData = {
+                    estudiante: eInfo.nombre,
+                    carnet: eInfo.carnet,
+                    genero: eInfo.genero === 'Femenino' ? 'F' : 'M',
+                    firma: '', // Celda de la imagen
+                    pct: `${pctNum}%`,
+                    ...asistenciasMap
+                };
+                
+                const row = sheet.addRow(rowData);
+
+                // Estilizar fila estática
+                row.height = 45; 
+                row.alignment = { vertical: 'middle' };
+                row.getCell('pct').font = { bold: true, color: { argb: pctNum < 75 ? 'FFEF4444' : 'FF10B981' } };
+                row.getCell('pct').alignment = { horizontal: 'center', vertical: 'middle' };
+                row.getCell('genero').alignment = { horizontal: 'center', vertical: 'middle' };
+
+                // Estilizar y transformar las celdas de fechas en checks ✔️ / ❌
+                fechasProg.forEach(f => {
+                    const cel = row.getCell(`f_${f}`);
+                    cel.alignment = { horizontal: 'center', vertical: 'middle' };
+                    if (cel.value === 'Presente') {
+                       cel.font = { color: { argb: 'FF10B981' }, bold: true };
+                       cel.value = '✓';
+                    } else {
+                       cel.font = { color: { argb: 'FFEF4444' }, bold: true };
+                       cel.value = '✗';
+                    }
+                });
+
+                // Insertar imagen en Base64 en la columna [Firma Digital]
+                if (hasFirma && eInfo.firma) {
+                    try {
+                        const imageId = workbook.addImage({
+                            base64: eInfo.firma,
+                            extension: 'png'
+                        });
+                        
+                        sheet.addImage(imageId, {
+                            tl: { col: 3.1, row: currentRowIdx - 0.8 }, // col 3 = Cuarta columna (Base0 = A=0, B=1, C=2, D=3)
+                            ext: { width: 120, height: 35 }
+                        });
+                    } catch(err) { console.error('Error ExcelJS img:', err); }
+                }
+
+                currentRowIdx++;
             });
 
             // Generar y descargar binario directamente
