@@ -68,6 +68,7 @@ body.no-scroll {
 .view-section.active {
     display: flex;
     opacity: 1;
+    z-index: 60; /* Asegurar que la vista activa esté encima de todo */
 }
 
 /* Ajustes de SweetAlert para que coincida con el tema */
@@ -180,11 +181,17 @@ button, .cursor-pointer, select, input[type="submit"] {
 }
 
 /* Evitar que el teclado móvil empuje el contenido fuera de vista en pantallas muy pequeñas */
-@media (max-height: 600px) {
+@media (max-height: 700px) {
     .full-screen-center {
-        justify-content: flex-start;
-        padding-top: 2rem;
-        overflow-y: auto;
+        justify-content: center;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        overflow-y: auto !important; /* Permitir scroll si el contenido no cabe (ej. teclado abierto) */
+    }
+    
+    /* Asegurar que el contenido interno tenga espacio */
+    .full-screen-center > div {
+        margin: auto 0;
     }
 }
 

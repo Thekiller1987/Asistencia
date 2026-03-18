@@ -223,16 +223,15 @@ const app = {
 
         document.querySelectorAll('.view-section').forEach(el => {
             el.classList.remove('active');
-            setTimeout(() => el.style.display = 'none', 300);
+            el.style.display = 'none'; // Cambio inmediato para evitar traslapes
         });
         
-        setTimeout(() => {
-            const view = document.getElementById(viewId);
-            if (view) {
-                view.style.display = 'flex';
-                setTimeout(() => view.classList.add('active'), 50);
-            }
-        }, 300);
+        const view = document.getElementById(viewId);
+        if (view) {
+            view.style.display = 'flex';
+            // Pequeño delay para la animación de opacidad
+            setTimeout(() => view.classList.add('active'), 10);
+        }
 
         const nav = document.getElementById('main-nav');
         if (viewId === 'view-dashboard-student' || viewId === 'view-dashboard-master') {
