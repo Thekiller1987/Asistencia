@@ -110,6 +110,9 @@ const app = {
             const unsubSolicitudes = db.collection('inscripciones').onSnapshot(snapshot => {
                 appState.globalData.solicitudes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 app.renderMasterViews();
+                const currentTab = document.querySelector('#tab-navigation-container .bg-white')?.id;
+                if(currentTab === 'tab-btn-dashboard') app.renderDashboard();
+                if(currentTab === 'tab-btn-auditoria') app.renderAuditoria();
             });
             const unsubAsistencias = db.collection('asistencias').onSnapshot(snapshot => {
                 appState.globalData.asistencias = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1364,8 +1367,15 @@ const app = {
         tbody.innerHTML = '';
         matriculados.forEach(m => {
             const eInfo = estudiantes.find(e => e.id === m.id_estudiante) || { nombre: m.nombre_estudiante, carnet: m.carnet_estudiante, firma: '', genero: 'N/A' };
-            const mAsistencias = asistencias.filter(a => a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
-            const pct = fechasProg.length === 0 ? 100 : Math.min(100, Math.round((mAsistencias.length / fechasProg.length) * 100));
+            
+            // Calculamos asisencias presentes que estrictamente correspondan al programa validado
+            let numPresentes = 0;
+            fechasProg.forEach(f => {
+                const asist = asistencias.find(a => a.fecha === f && a.id_clase === idClase && a.id_estudiante === m.id_estudiante);
+                if (asist) numPresentes++;
+            });
+
+            const pct = fechasProg.length === 0 ? 100 : Math.min(100, Math.round((numPresentes / fechasProg.length) * 100));
             
             let rowHtml = `
                 <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
