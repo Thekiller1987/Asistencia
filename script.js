@@ -1,10 +1,30 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYclYUQE3T7wd125LJmMGbrak-ybYyw_MAjGV9znDw2JgYECqnR6lG0vF0RFQ58k7D4w/exec';
 
+// --- CONFIGURACIÓN FIREBASE ---
+const firebaseConfig = {
+    apiKey: "AIzaSyC3fkuDlY7zjgxufgVEO9qkpmjlJvS9-g8",
+    authDomain: "asistenica-unan.firebaseapp.com",
+    projectId: "asistenica-unan",
+    storageBucket: "asistenica-unan.firebasestorage.app",
+    messagingSenderId: "25399693880",
+    appId: "1:25399693880:web:d311273c293510a1054ccd",
+    measurementId: "G-D7NLM9N6ER"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const analytics = firebase.analytics();
+
+// Habilitar persistencia offline para que la app sea instantánea
+db.enablePersistence().catch(err => console.error("Error persistencia:", err.code));
+
 // ESTADO EN MEMORIA (Requisito: Cero LocalStorage)
 const appState = {
-    user: null, // { nombre, usuario, carnet, carrera, rol }
+    user: null, // { nombre, usuario, carnet, carrera, rol, id }
     currentRole: null, // 'Estudiante' | 'Maestro'
     scanner: null,
+    listeners: [], // Suscripciones active de Firestore (sockets)
     // DB Cache
     globalData: { clases: [], solicitudes: [], asistencias: [], estudiantes: [] }
 };
@@ -38,6 +58,63 @@ const app = {
                 .then(() => console.log('Service Worker Registrado'))
                 .catch(err => console.error('SW Falló', err));
         }
+
+        // Asegurar Super Usuario inicial (waskar/1987)
+        app.ensureSuperUser();
+    },
+
+    ensureSuperUser: async () => {
+        try {
+            const query = await db.collection('users').where('usuario', '==', 'waskar').get();
+            if (query.empty) {
+                console.log("Creando Super Usuario por defecto...");
+                await db.collection('users').add({
+                    usuario: 'waskar',
+                    clave: '1987',
+                    nombre: 'Waskar Admin',
+                    rol: 'Super Admin',
+                    fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        } catch (e) {
+            console.error("Error al asegurar Super Usuario:", e);
+        }
+    },
+
+    // --- REAL-TIME SYNC (SOCKETS) ---
+    startRealTimeSync: () => {
+        app.stopRealTimeSync(); // Limpiar previos
+
+        // 1. Escuchar Clases (Global)
+        const unsubClasses = db.collection('clases').onSnapshot(snapshot => {
+            appState.globalData.clases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            app.renderClasses();
+        });
+
+        // 2. Escuchar Mis Inscripciones
+        const unsubInscripciones = db.collection('inscripciones')
+            .where('id_estudiante', '==', appState.user.id)
+            .onSnapshot(snapshot => {
+                appState.globalData.solicitudes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                app.renderStudentClasses();
+            });
+
+        // 3. Escuchar Asistencias (Si es maestro)
+        if (appState.user.rol === 'maestro') {
+            const unsubAsistencias = db.collection('asistencias')
+                .onSnapshot(snapshot => {
+                    appState.globalData.asistencias = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // app.updateStats(); // Se implementará luego
+                });
+            appState.listeners.push(unsubAsistencias);
+        }
+
+        appState.listeners.push(unsubClasses, unsubInscripciones);
+    },
+
+    stopRealTimeSync: () => {
+        appState.listeners.forEach(unsub => unsub());
+        appState.listeners = [];
     },
 
     handleNetworkChange: () => {
@@ -167,33 +244,50 @@ const app = {
         }
     },
 
-    // --- AUTH ---
+    // --- AUTH (FIREBASE) ---
     handleLogin: async (e) => {
         e.preventDefault();
         const user = document.getElementById('login-user').value.trim();
         const pass = document.getElementById('login-pass').value.trim();
         
-        // Remover currentRole payload as backend handles true role verification now
-        const payload = { accion: 'login', usuario: user, clave: pass, rol: appState.currentRole };
-        const res = await app.apiCall(payload);
-        
-        if (res.status === 'success') {
-            appState.user = res.data; 
-            appState.user.usuario = appState.user.usuario || user; 
+        try {
+            app.showLoader('Verificando credenciales...');
             
-            document.getElementById('form-login').reset();
-            app.playSound('success-sound');
-            
-            // Navigate based on Real Role assigned in BD, not the button clicked.
-            if (appState.user.rol === 'Super Admin') {
-                app.showView('view-dashboard-superadmin');
-            } else if (appState.user.rol === 'Maestro') {
-                app.loadMasterData();
-            } else {
-                app.loadStudentData();
+            // Buscar usuario en Firestore
+            const snapshot = await db.collection('users')
+                .where('usuario', '==', user)
+                .where('clave', '==', pass)
+                .get();
+
+            if (snapshot.empty) {
+                app.hideLoader();
+                app.alertError('Credenciales Inválidas', 'Usuario o contraseña incorrectos.');
+                return;
             }
-        } else {
-            app.alertError('Credenciales Inválidas', res.message || 'Error al iniciar sesión.');
+
+            const userData = snapshot.docs[0].data();
+            appState.user = { id: snapshot.docs[0].id, ...userData };
+            
+            app.hideLoader();
+            app.playSound('success-sound');
+            document.getElementById('form-login').reset();
+
+            // Iniciar Sockets en Tiempo Real
+            app.startRealTimeSync();
+
+            // Navegar según Rol
+            if (appState.user.rol === 'maestro') {
+                app.showView('view-dashboard-master');
+            } else if (appState.user.rol === 'Super Admin') {
+                app.showView('view-dashboard-superadmin');
+            } else {
+                app.showView('view-dashboard-student');
+            }
+
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error de Conexión', 'No se pudo conectar con Firebase.');
         }
     },
 
@@ -206,46 +300,79 @@ const app = {
             return;
         }
 
-        const payload = {
-            accion: 'registroNuevo',
-            nombre: document.getElementById('reg-name').value.trim(),
-            usuario: document.getElementById('reg-user').value.trim(),
-            carnet: document.getElementById('reg-carnet').value.trim(),
-            carrera: document.getElementById('reg-carrera').value.trim(),
-            anio: document.getElementById('reg-year').value.trim(),
-            clave: document.getElementById('reg-pass').value.trim(),
-            genero: document.getElementById('reg-genero').value,
-            firma: firmaBase64,
-            rol: 'Estudiante'
-        };
-
-        const res = await app.apiCall(payload);
+        const usuario = document.getElementById('reg-user').value.trim();
         
-        if (res.status === 'success') {
-            app.alertSuccess('Registro Exitoso', 'Cuenta creada. Inicia sesión.');
+        try {
+            app.showLoader('Creando cuenta...');
+
+            // Verificar si el usuario ya existe
+            const exists = await db.collection('users').where('usuario', '==', usuario).get();
+            if (!exists.empty) {
+                app.hideLoader();
+                app.alertError('Error', 'El nombre de usuario ya está en uso.');
+                return;
+            }
+
+            const newUserData = {
+                nombre: document.getElementById('reg-name').value.trim(),
+                usuario: usuario,
+                carnet: document.getElementById('reg-carnet').value.trim(),
+                carrera: document.getElementById('reg-carrera').value.trim(),
+                anio: document.getElementById('reg-year').value.trim(),
+                clave: document.getElementById('reg-pass').value.trim(),
+                genero: document.getElementById('reg-genero').value,
+                firma: firmaBase64,
+                rol: 'estudiante',
+                fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await db.collection('users').add(newUserData);
+            
+            app.hideLoader();
+            app.alertSuccess('¡Bienvenido!', 'Cuenta creada exitosamente. Inicia sesión.');
             document.getElementById('form-register').reset();
             app.clearSignature();
             app.showView('view-login');
-        } else {
-            app.alertError('Error', res.message || 'El usuario ya existe.');
+
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo completar el registro.');
         }
     },
 
     handleRegisterMaestro: async (e) => {
         e.preventDefault();
-        const payload = {
-            accion: 'crearMaestro',
-            nombre: document.getElementById('admin-reg-name').value.trim(),
-            usuario: document.getElementById('admin-reg-user').value.trim(),
-            clave: document.getElementById('admin-reg-pass').value.trim()
-        };
+        const nombre = document.getElementById('admin-reg-name').value.trim();
+        const usuario = document.getElementById('admin-reg-user').value.trim();
+        const clave = document.getElementById('admin-reg-pass').value.trim();
 
-        const res = await app.apiCall(payload);
-        if (res.status === 'success') {
-            app.alertSuccess('Maestro Registrado', 'La cuenta docente ha sido autorizada.');
+        try {
+            app.showLoader('Registrando maestro...');
+            
+            // Verificar si ya existe
+            const exists = await db.collection('users').where('usuario', '==', usuario).get();
+            if (!exists.empty) {
+                app.hideLoader();
+                app.alertError('Error', 'El nombre de usuario ya está en uso.');
+                return;
+            }
+
+            await db.collection('users').add({
+                nombre,
+                usuario,
+                clave,
+                rol: 'maestro',
+                fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            app.hideLoader();
+            app.alertSuccess('Maestro Registrado', 'La cuenta docente ha sido autorizada en Firebase.');
             document.getElementById('form-register-maestro').reset();
-        } else {
-            app.alertError('Oops', res.message);
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo autorizar la cuenta.');
         }
     },
 
@@ -255,13 +382,7 @@ const app = {
         document.getElementById('student-carnet').innerText = `Carnet: ${appState.user.carnet || 'N/A'}`;
         document.getElementById('student-carrera').innerText = appState.user.carrera || 'Universidad';
         app.showView('view-dashboard-student');
-
-        // Obtener datos globales para ver clases disponibles
-        const res = await app.apiCall({ accion: 'obtenerDatosGlobales' });
-        if(res.status === 'success') {
-            appState.globalData = res.data;
-            app.renderStudentClasses();
-        }
+        app.startRealTimeSync(); 
     },
 
     renderStudentClasses: () => {
@@ -269,8 +390,8 @@ const app = {
         const selectClase = document.getElementById('student-class-select');
         const listDiv = document.getElementById('student-classes-list');
         
-        // Mis Solicitudes / Matriculas (Filtrar por mi usuario)
-        const misSolicitudes = solicitudes.filter(s => s.Usuario == appState.user.usuario);
+        // Mis Solicitudes / Matriculas (Filtrar por mi ID)
+        const misSolicitudes = solicitudes.filter(s => s.id_estudiante === appState.user.id);
         
         listDiv.innerHTML = '';
         selectClase.innerHTML = '<option value="">Seleccione una clase...</option>';
@@ -279,9 +400,9 @@ const app = {
             listDiv.innerHTML = '<p class="text-xs text-gray-400 text-center font-medium py-3">No estás inscrito en ninguna clase aún.</p>';
         } else {
             misSolicitudes.forEach(sol => {
-                const claseInfo = clases.find(c => c.ID_Clase === sol.ID_Clase);
-                const nombreClase = claseInfo ? claseInfo.Nombre : sol.ID_Clase;
-                const isAprobado = sol.Estado === 'Aprobado';
+                const claseInfo = clases.find(c => c.id === sol.id_clase);
+                const nombreClase = claseInfo ? claseInfo.Nombre : sol.nombre_clase;
+                const isAprobado = sol.estado === 'Aprobada';
                 
                 let asistenciaHtml = '';
                 if (isAprobado && claseInfo) {
@@ -289,7 +410,7 @@ const app = {
                     try { fechasProgramadas = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
                     
                     if(fechasProgramadas.length > 0) {
-                        const asistenciasMias = asistencias.filter(a => a.Usuario == appState.user.usuario && a.ID_Clase === sol.ID_Clase && (a.Estado === 'Presente' || a.Estado === 'Justificado')).length;
+                        const asistenciasMias = asistencias.filter(a => a.id_estudiante === appState.user.id && a.id_clase === sol.id_clase).length;
                         const pct = Math.round((asistenciasMias / fechasProgramadas.length) * 100);
                         const pctColor = pct < 75 ? 'text-red-500' : 'text-green-600';
                         
@@ -299,26 +420,17 @@ const app = {
                                 <span class="font-extrabold ${pctColor}">${pct}% (${asistenciasMias}/${fechasProgramadas.length})</span>
                             </div>
                         `;
-                    } else {
-                        asistenciaHtml = `
-                            <div class="mt-2 text-[10px] text-gray-400 bg-white px-2 py-1 rounded italic">Programa sin configurar</div>
-                        `;
                     }
                 }
 
-                let statusHtml = '';
-                if (claseInfo && claseInfo.Estado === 'Eliminada') {
-                    statusHtml = `<span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg bg-red-100 text-red-700">❌ Removida</span>`;
-                } else if (claseInfo && claseInfo.Estado === 'Finalizada') {
-                    statusHtml = `<span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg bg-gray-200 text-gray-600">📁 Archivada</span>`;
-                } else {
-                    statusHtml = `<span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg ${isAprobado ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}">
+                let statusHtml = `
+                    <span class="px-2 py-1 text-[10px] uppercase font-bold rounded-lg ${isAprobado ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'}">
                         ${isAprobado ? '✅ Inscrito' : '⏳ Pendiente'}
-                    </span>`;
-                }
+                    </span>
+                `;
 
                 listDiv.innerHTML += `
-                    <div class="flex flex-col p-3 ${claseInfo && (claseInfo.Estado === 'Eliminada' || claseInfo.Estado === 'Finalizada') ? 'bg-gray-100/50 grayscale-[0.5]' : 'bg-gray-50'} rounded-xl border border-gray-100">
+                    <div class="flex flex-col p-3 ${claseInfo && claseInfo.Estado !== 'Activa' ? 'bg-gray-100/50 grayscale-[0.5]' : 'bg-gray-50'} rounded-xl border border-gray-100">
                         <div class="flex justify-between items-center">
                             <div class="max-w-[150px]">
                                 <p class="font-bold text-gray-800 text-sm truncate">${nombreClase}</p>
@@ -332,11 +444,11 @@ const app = {
             });
         }
 
-        // Llenar Clases a las que NO he solicitado aún (Solo las que están ACTIVAS)
+        // Llenar Clases a las que NO he solicitado aún
         clases.filter(c => c.Estado === 'Activa').forEach(c => {
-            const yaSolicito = misSolicitudes.some(s => s.ID_Clase === c.ID_Clase);
+            const yaSolicito = misSolicitudes.some(s => s.id_clase === c.id);
             if(!yaSolicito) {
-                selectClase.innerHTML += `<option value="${c.ID_Clase}">${c.Nombre} (Prof. ${c.Profesor})</option>`;
+                selectClase.innerHTML += `<option value="${c.id}">${c.Nombre} (Prof. ${c.Profesor})</option>`;
             }
         });
     },
@@ -348,17 +460,25 @@ const app = {
             return;
         }
 
-        const res = await app.apiCall({
-            accion: 'solicitarInscripcion',
-            id_clase: idClase,
-            usuario_estudiante: appState.user.usuario
-        });
-
-        if(res.status === 'success') {
+        try {
+            app.showLoader('Enviando solicitud...');
+            const claseInfo = appState.globalData.clases.find(c => c.id === idClase);
+            
+            await db.collection('inscripciones').add({
+                id_clase: idClase,
+                id_estudiante: appState.user.id,
+                nombre_estudiante: appState.user.nombre,
+                carnet_estudiante: appState.user.carnet,
+                nombre_clase: claseInfo ? claseInfo.Nombre : '?',
+                estado: 'Pendiente',
+                fechaSolicitud: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            app.hideLoader();
             app.alertSuccess('Solicitud Enviada', 'El maestro debe aprobarte pronto.');
-            app.loadStudentData(); // Refresh list
-        } else {
-            app.alertError('Error', res.message);
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo enviar la solicitud.');
         }
     },
 
@@ -405,25 +525,26 @@ const app = {
     },
 
     markAttendance: async (idClase, tokenQr) => {
-        const payload = {
-            accion: 'marcarAsistencia',
-            id_clase: idClase,
-            token: tokenQr,
-            usuario_estudiante: appState.user.usuario
-        };
+        try {
+            app.showLoader('Registrando asistencia...');
+            
+            // 1. Verificar si existe la clase
+            const classDoc = await db.collection('clases').doc(idClase).get();
+            if (!classDoc.exists) {
+                app.hideLoader();
+                app.alertError('Error', 'La clase no existe.');
+                return;
+            }
 
-        const res = await app.apiCall(payload);
-        
-        if (res.status === 'success') {
-            Swal.fire({
-                icon: 'success', title: '¡Asistencia Registrada!',
-                text: 'Registrado correctamente dentro del sistema UV.',
-                confirmButtonColor: '#002157'
-            }).then(() => {
-                app.loadStudentData(); // Update personal report
-            });
-        } else {
-            if (res.code === 'NOT_ENROLLED') {
+            // 2. Verificar Inscripción
+            const insq = await db.collection('inscripciones')
+                .where('id_clase', '==', idClase)
+                .where('id_estudiante', '==', appState.user.id)
+                .where('estado', '==', 'Aprobada')
+                .get();
+
+            if (insq.empty) {
+                app.hideLoader();
                 const conf = await Swal.fire({
                     title: 'Clase Nueva Detectada',
                     text: 'Aún no estás inscrito en esta clase. ¿Deseas solicitar inscripción al maestro?',
@@ -432,33 +553,47 @@ const app = {
                     confirmButtonColor: '#002157'
                 });
                 if (conf.isConfirmed) {
-                    const reqRes = await app.apiCall({ accion: 'solicitarInscripcion', id_clase: idClase, usuario_estudiante: appState.user.usuario });
-                    if (reqRes.status === 'success') {
-                        app.alertSuccess('Solicitud Enviada', 'El maestro debe aprobarte pronto. Una vez aprobado, escanéa el código de nuevo para marcar asistencia.');
-                        app.loadStudentData();
-                    } else {
-                        app.alertError('Error', reqRes.message);
-                    }
+                    await db.collection('inscripciones').add({
+                        id_clase: idClase,
+                        id_estudiante: appState.user.id,
+                        nombre_estudiante: appState.user.nombre,
+                        carnet_estudiante: appState.user.carnet,
+                        nombre_clase: classDoc.data().Nombre,
+                        estado: 'Pendiente',
+                        fechaSolicitud: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    app.alertSuccess('Solicitud Enviada', 'El maestro debe aprobarte pronto.');
                 }
-            } else {
-                app.alertError('Alerta de Asistencia', res.message);
+                return;
             }
+
+            // 3. Registrar Asistencia
+            await db.collection('asistencias').add({
+                id_clase: idClase,
+                id_estudiante: appState.user.id,
+                nombre_estudiante: appState.user.nombre,
+                fecha: new Date().toLocaleDateString(),
+                hora: new Date().toLocaleTimeString(),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            app.hideLoader();
+            app.playSound('success-sound');
+            Swal.fire({ icon: 'success', title: '¡Asistencia Registrada!', text: 'Se ha guardado en tiempo real.', confirmButtonColor: '#002157' });
+
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo marcar asistencia.');
         }
     },
 
-    // --- MÓDULO MAESTRO ---
+    // --- MÓDULO MAESTRO (FIREBASE REPLACEMENT) ---
     loadMasterData: async () => {
         document.getElementById('master-name').innerText = `Profe. ${appState.user.nombre}`;
         app.showView('view-dashboard-master');
-
-        const res = await app.apiCall({ accion: 'obtenerDatosGlobales' });
-        if(res.status === 'success') {
-            appState.globalData = res.data;
-            app.renderMasterViews();
-            app.switchMasterTab('dashboard');
-        } else {
-            app.alertError('Tablero', 'No se pudieron descargar los datos de clase.');
-        }
+        app.startRealTimeSync(); 
+        app.switchMasterTab('dashboard');
     },
 
     switchMasterTab: (tabId) => {
@@ -482,27 +617,26 @@ const app = {
 
     renderMasterViews: () => {
         const { clases, solicitudes } = appState.globalData;
-        // El maestro no ve las clases con estado 'Eliminada'
-        const myClasses = clases.filter(c => (c.Profesor == appState.user.nombre || c.Profesor === appState.user.usuario) && c.Estado !== 'Eliminada'); 
+        const myClasses = clases.filter(c => c.ProfesorId === appState.user.id && c.Estado !== 'Eliminada'); 
 
         // Rellenar selects
         const dashboardSelect = document.getElementById('dashboard-class-filter');
         const qrSelect = document.getElementById('class-select');
         const auditSelect = document.getElementById('audit-class-select');
         
-        const optionsHtml = myClasses.map(c => `<option value="${c.ID_Clase}">${c.Nombre} (${c.Estado})</option>`).join('');
+        const optionsHtml = myClasses.map(c => `<option value="${c.id}">${c.Nombre} (${c.Estado})</option>`).join('');
         dashboardSelect.innerHTML = `<option value="ALL">Todas las Clases Activas</option>` + optionsHtml;
         qrSelect.innerHTML = `<option value="">Seleccione...</option>` + optionsHtml;
         if(auditSelect) auditSelect.innerHTML = `<option value="">Seleccione una Clase...</option>` + optionsHtml;
 
-        // Render Mis Materias Activas en Tab Clases
+        // Render Mis Materias en Tab Clases
         const myClassesList = document.getElementById('my-classes-list');
         myClassesList.innerHTML = '';
         if(myClasses.length === 0) {
             myClassesList.innerHTML = '<p class="text-sm text-center text-gray-400 py-6">Sin clases creadas.</p>';
         } else {
             myClasses.forEach(c => {
-                const isActive = c.Estado !== 'Finalizada';
+                const isActive = c.Estado === 'Activa';
                 myClassesList.innerHTML += `
                     <div class="bg-white border rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start">
@@ -511,25 +645,10 @@ const app = {
                                 <p class="text-xs text-gray-400 font-medium">Días: ${c.Dias || 'N/A'}</p>
                                 <p class="text-[10px] mt-1 font-bold ${isActive ? 'text-green-600' : 'text-gray-400'} uppercase tracking-wider">${c.Estado}</p>
                             </div>
-                            <div class="flex flex-col items-end gap-2">
-                                <div class="flex gap-1">
-                                    <button onclick="app.editClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-unan-blue transition rounded-lg hover:bg-blue-50" title="Editar Clase">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                    </button>
-                                    <button onclick="app.deleteClass('${c.ID_Clase}')" class="p-2 text-gray-400 hover:text-red-500 transition rounded-lg hover:bg-red-50" title="Eliminar Permanente">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
-                                </div>
-                                <div onclick="app.showLargeCode('${c.Codigo}', '${c.Nombre}')" class="bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 flex items-center gap-1.5 cursor-pointer hover:bg-blue-50 transition-colors group">
-                                    <span class="text-[10px] font-black text-gray-400 group-hover:text-unan-blue tracking-tighter uppercase transition-colors">CÓDIGO:</span>
-                                    <span class="text-xs font-bold text-gray-700 tracking-widest">${c.Codigo}</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-300 group-hover:text-unan-blue transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
-                                </div>
-                            </div>
                         </div>
                         <div class="flex gap-2 border-t border-gray-100 pt-3">
                             ${isActive ? 
-                                `<button onclick="app.finalizarClase('${c.ID_Clase}')" class="flex-1 text-[10px] bg-gray-100 text-gray-600 font-bold py-2 rounded-lg hover:bg-gray-200 transition">ARCHIVAR CLASE</button>` : 
+                                `<button onclick="app.finalizarClase('${c.id}')" class="flex-1 text-[10px] bg-gray-100 text-gray-600 font-bold py-2 rounded-lg hover:bg-gray-200 transition">ARCHIVAR CLASE</button>` : 
                                 `<span class="flex-1 text-[10px] bg-gray-50 text-gray-300 font-bold py-2 rounded-lg text-center">CLASE FINALIZADA</span>`
                             }
                         </div>
@@ -539,7 +658,7 @@ const app = {
         }
 
         // Render Solicitudes Pendientes (filtradas por las clases del maestro)
-        const misSolicitudes = solicitudes.filter(s => myClasses.some(c => c.ID_Clase === s.ID_Clase) && s.Estado === 'Pendiente');
+        const misSolicitudes = solicitudes.filter(s => myClasses.some(c => c.id === s.id_clase) && s.estado === 'Pendiente');
         const reqList = document.getElementById('requests-list');
         const badge = document.getElementById('badge-solicitudes');
         
@@ -548,21 +667,19 @@ const app = {
             badge.innerText = misSolicitudes.length;
             reqList.innerHTML = '';
             misSolicitudes.forEach(s => {
-                const nombreC = myClasses.find(c => c.ID_Clase === s.ID_Clase).Nombre;
                 reqList.innerHTML += `
                     <div class="bg-white border rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center shadow-sm gap-3">
                         <div class="flex items-center gap-3 w-full">
                             <div class="w-10 h-10 rounded-full bg-blue-100 text-unan-blue flex justify-center items-center font-bold">
-                                ${s.NombreEstudiante.charAt(0).toUpperCase()}
+                                ${s.nombre_estudiante.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <p class="font-bold text-gray-800 text-sm">${s.NombreEstudiante}</p>
-                                <p class="text-[10px] text-gray-500 font-medium">Carnet: ${s.CarnetEstudiante} | Clase: <b class="text-unan-blue">${nombreC}</b></p>
+                                <p class="font-bold text-gray-800 text-sm">${s.nombre_estudiante}</p>
+                                <p class="text-[10px] text-gray-500 font-medium">Carnet: ${s.carnet_estudiante} | Clase: <b class="text-unan-blue">${s.nombre_clase}</b></p>
                             </div>
                         </div>
                         <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-                            <button onclick="app.gestionarSolicitud('${s.ID_Clase}', '${s.Usuario}', 'Aprobado')" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Aprobar</button>
-                            <button onclick="app.gestionarSolicitud('${s.ID_Clase}', '${s.Usuario}', 'Rechazado')" class="flex-1 bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">Rechazar</button>
+                            <button onclick="app.approveEnrollment('${s.id}')" class="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95">Aprobar</button>
                         </div>
                     </div>
                 `;
@@ -574,56 +691,54 @@ const app = {
     },
 
     renderDashboard: () => {
-        const { clases, solicitudes, asistencias, estudiantes } = appState.globalData;
+        const { clases, solicitudes, asistencias } = appState.globalData;
         const selector = document.getElementById('dashboard-class-filter');
-        const filterIdClass = selector.value; // 'ALL' o ID especifico
+        const filterIdClass = selector.value; // 'ALL' o ID específico
         
-        const myClasses = clases.filter(c => c.Profesor == appState.user.nombre || c.Profesor === appState.user.usuario);
-        const activeClassIds = myClasses.filter(c => c.Estado !== 'Finalizada').map(c => c.ID_Clase);
+        const myClasses = clases.filter(c => c.ProfesorId === appState.user.id);
+        const activeClassIds = myClasses.filter(c => c.Estado === 'Activa').map(c => c.id);
 
         let clasesToEval = filterIdClass === 'ALL' ? activeClassIds : [filterIdClass];
 
         // Obtener alumnos aprobados en las clases seleccionadas
-        const matriculasAprobadas = solicitudes.filter(s => clasesToEval.includes(s.ID_Clase) && s.Estado === 'Aprobado');
+        const matriculasAprobadas = solicitudes.filter(s => clasesToEval.includes(s.id_clase) && s.estado === 'Aprobada');
         
-        // Obtener asistencias registradas en las clases seleccionadas (Presentes y Justificados cuentan a favor)
-        const asistenciasClases = asistencias.filter(a => clasesToEval.includes(a.ID_Clase) && (a.Estado === 'Presente' || a.Estado === 'Justificado'));
+        // Obtener asistencias registradas
+        const asistenciasClases = asistencias.filter(a => clasesToEval.includes(a.id_clase));
 
-        // Extraer lista de usuarios únicos matriculados
-        const usersAprobados = [...new Set(matriculasAprobadas.map(m => m.Usuario))];
+        // Usuarios únicos matriculados
+        const idsEstudiantes = [...new Set(matriculasAprobadas.map(m => m.id_estudiante))];
 
-        let stats = { totalEstudiantes: usersAprobados.length, totalSesiones: 0, globalPercent: 0 };
+        let stats = { totalEstudiantes: idsEstudiantes.length, globalPercent: 0 };
         let alumnosData = [];
 
-        // Para ser 100% precisos con el calendario, leer las Fechas de Programa guardadas por clase
-        usersAprobados.forEach(user => {
-            const studentInfo = estudiantes.find(e => e.Usuario === user) || { Nombre: user, Carnet: 'N/A' };
-            const studentClasses = matriculasAprobadas.filter(m => m.Usuario === user).map(m => m.ID_Clase);
+        idsEstudiantes.forEach(estId => {
+            const matriculas = matriculasAprobadas.filter(m => m.id_estudiante === estId);
+            const nombreEst = matriculas[0].nombre_estudiante;
+            const carnetEst = matriculas[0].carnet_estudiante;
             
-            // Asistencias totales
-            const studentAsist = asistenciasClases.filter(a => a.Usuario === user).length;
+            // Asistencias del estudiante
+            const studentAsist = asistenciasClases.filter(a => a.id_estudiante === estId).length;
 
-            let totalClasesProgramadas = 0;
-            studentClasses.forEach(cId => {
-                const claseInfo = clases.find(c => c.ID_Clase === cId);
+            let totalDiasProgramados = 0;
+            matriculas.forEach(m => {
+                const claseInfo = clases.find(c => c.id === m.id_clase);
                 let prog = [];
                 try { if(claseInfo) prog = JSON.parse(claseInfo.FechasPrograma); } catch(e){}
-                totalClasesProgramadas += prog.length;
+                totalDiasProgramados += prog.length;
             });
 
-            // Si aún no hay programa, % es 100 por defecto
-            let pct = totalClasesProgramadas === 0 ? 100 : Math.min(100, Math.round((studentAsist / totalClasesProgramadas) * 100));
+            let pct = totalDiasProgramados === 0 ? 100 : Math.min(100, Math.round((studentAsist / totalDiasProgramados) * 100));
             
             alumnosData.push({
-                nombre: studentInfo.Nombre,
-                carnet: studentInfo.Carnet,
-                usuario: user,
+                nombre: nombreEst,
+                carnet: carnetEst,
+                id: estId,
                 presentes: studentAsist,
-                total: totalClasesProgramadas,
+                total: totalDiasProgramados,
                 porcentaje: pct
             });
             stats.globalPercent += pct;
-            stats.totalSesiones += studentAsist; // Total presentes (stats use)
         });
 
         stats.globalPercent = stats.totalEstudiantes === 0 ? 0 : Math.round(stats.globalPercent / stats.totalEstudiantes);
@@ -654,19 +769,16 @@ const app = {
         container.innerHTML = '';
         
         if (alumnosData.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-400 font-medium py-8">Aún no hay estudiantes matriculados/aprobados.</p>';
+            container.innerHTML = '<p class="text-center text-gray-400 font-medium py-8">No hay alumnos por mostrar.</p>';
         } else {
-            // Sort por porcentaje descendente
             alumnosData.sort((a,b) => b.porcentaje - a.porcentaje).forEach(al => {
                 const isDanger = al.porcentaje < 75;
-                const strokeColor = isDanger ? '#ef4444' : '#10b981'; // Red / Green
+                const strokeColor = isDanger ? '#ef4444' : '#10b981';
                 const badgeColor = isDanger ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700';
                 
-                // Card UI
                 container.innerHTML += `
                     <div class="bg-white border rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4">
-                            <!-- Circular Progress Avatar -->
                             <div class="relative w-12 h-12 flex justify-center items-center rounded-full bg-gray-50">
                                 <svg class="w-12 h-12 absolute transform -rotate-90">
                                     <circle cx="24" cy="24" r="20" stroke="#f3f4f6" stroke-width="4" fill="none" />
@@ -674,16 +786,14 @@ const app = {
                                 </svg>
                                 <span class="text-gray-700 font-bold text-xs z-10">${al.nombre.charAt(0).toUpperCase()}</span>
                             </div>
-                            
                             <div>
                                 <h4 class="font-bold text-gray-800 text-sm leading-tight">${al.nombre}</h4>
-                                <p class="text-[10px] text-gray-500 font-medium mt-0.5">${al.usuario} • ${al.carnet}</p>
+                                <p class="text-[10px] text-gray-500 font-medium mt-0.5">${al.carnet}</p>
                             </div>
                         </div>
-                        
                         <div class="text-right">
                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black ${badgeColor}">
-                                ${isDanger ? '⚠️' : '✅'} ${al.porcentaje}%
+                                ${al.porcentaje}%
                             </span>
                             <p class="text-[10px] text-gray-400 font-medium mt-1">${al.presentes}/${al.total} Días</p>
                         </div>
@@ -691,7 +801,6 @@ const app = {
                 `;
             });
         }
-        
         // Save current data globally for Export
         appState.currentDashboardData = alumnosData;
     },
@@ -732,41 +841,50 @@ const app = {
         }
 
         const fechasPrograma = app.generateSchedule(startDateStr, endDateStr, days);
-
         if (fechasPrograma.length === 0) {
             app.alertError('Error', 'El rango de fechas y los días seleccionados no generan ninguna clase.');
             return;
         }
 
-        const res = await app.apiCall({
-            accion: 'crearClase',
-            nombre_clase: title,
-            profesor: appState.user.nombre || appState.user.usuario,
-            dias: days.join(', '),
-            fechas_programa: JSON.stringify(fechasPrograma),
-            fecha_inicio: startDateStr,
-            fecha_fin: endDateStr
-        });
-
-        if(res.status === 'success') {
-            document.getElementById('new-class-name').value = '';
-            document.getElementById('new-class-start-date').value = '';
-            document.getElementById('new-class-end-date').value = '';
-            checkboxes.forEach(chk => chk.checked = false);
-            app.playSound('success-sound');
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Clase Creada',
-                html: `La clase se creó con éxito.<br><br><span class="text-xs text-gray-400">CÓDIGO DE ACCESO:</span><br><b class="text-2xl text-unan-blue tracking-widest">${res.codigo}</b>`,
-                confirmButtonColor: '#002157'
-            }).then(() => {
-                app.loadMasterData(); 
+        try {
+            app.showLoader('Guardando clase...');
+            await db.collection('clases').add({
+                Nombre: title,
+                Profesor: appState.user.nombre,
+                ProfesorId: appState.user.id,
+                Dias: days.join(', '),
+                FechasPrograma: JSON.stringify(fechasPrograma),
+                FechaInicio: startDateStr,
+                FechaFin: endDateStr,
+                Estado: 'Activa',
+                FechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
             });
-        } else {
-            app.alertError('Error', res.message);
+            app.hideLoader();
+            app.playSound('success-sound');
+            app.alertSuccess('Clase Creada', 'La clase se sincronizó en tiempo real.');
+            document.getElementById('new-class-name').value = '';
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo crear la clase en Firestore.');
         }
     },
+
+    approveEnrollment: async (solicitudId) => {
+        try {
+            app.showLoader('Aprobando estudiate...');
+            await db.collection('inscripciones').doc(solicitudId).update({
+                estado: 'Aprobada',
+                fechaAprobacion: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            app.hideLoader();
+            app.playSound('success-sound');
+        } catch (error) {
+            app.hideLoader();
+            app.alertError('Error', 'No se pudo aprobar la solicitud.');
+        }
+    },
+
 
     finalizarClase: async (idClase) => {
         const confirm = await Swal.fire({
@@ -776,11 +894,17 @@ const app = {
         });
 
         if (confirm.isConfirmed) {
-            const res = await app.apiCall({ accion: 'finalizarClase', id_clase: idClase });
-            if(res.status === 'success') {
+            try {
+                app.showLoader('Finalizando...');
+                await db.collection('clases').doc(idClase).update({
+                    Estado: 'Finalizada'
+                });
+                app.hideLoader();
                 app.playSound('success-sound');
-                app.loadMasterData();
-            } else { app.alertError('Error', res.message); }
+            } catch (error) {
+                app.hideLoader();
+                app.alertError('Error', 'No se pudo archivar la clase.');
+            }
         }
     },
 
@@ -1280,18 +1404,45 @@ const app = {
             return;
         }
 
-        const res = await app.apiCall({
-            accion: 'unirsePorCodigo',
-            codigo: code,
-            usuario_estudiante: appState.user.usuario
-        });
+        try {
+            app.showLoader('Buscando clase...');
+            const snapshot = await db.collection('clases').where('Codigo', '==', code).get();
+            
+            if (snapshot.empty) {
+                app.hideLoader();
+                app.alertError('Alerta', 'El código de clase no existe o es incorrecto.');
+                return;
+            }
 
-        if (res.status === 'success') {
-            app.alertSuccess('¡Éxito!', res.message);
+            const doc = snapshot.docs[0];
+            const clase = doc.data();
+            const idClase = doc.id;
+
+            // Verificar si ya tiene solicitud
+            const yaInscrito = appState.globalData.solicitudes.some(s => s.id_clase === idClase);
+            if (yaInscrito) {
+                app.hideLoader();
+                app.alertError('Alerta', 'Ya has solicitado unirte a esta clase.');
+                return;
+            }
+
+            await db.collection('inscripciones').add({
+                id_clase: idClase,
+                id_estudiante: appState.user.id,
+                nombre_estudiante: appState.user.nombre,
+                carnet_estudiante: appState.user.carnet,
+                nombre_clase: clase.Nombre,
+                estado: 'Pendiente',
+                fechaSolicitud: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            app.hideLoader();
+            app.alertSuccess('¡Éxito!', 'Solicitud enviada. El docente debe aprobarte.');
             input.value = '';
-            app.loadStudentData();
-        } else {
-            app.alertError('Alerta', res.message);
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo procesar la solicitud.');
         }
     },
 

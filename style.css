@@ -151,3 +151,56 @@ button, .cursor-pointer, select, input[type="submit"] {
     }
 }
 
+/* Asegurar que la pantalla de login no tenga scroll y esté centrada */
+.full-screen-center {
+    height: 100dvh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    padding: 1.5rem;
+}
+
+/* Evitar que el teclado móvil empuje el contenido fuera de vista en pantallas muy pequeñas */
+@media (max-height: 600px) {
+    .full-screen-center {
+        justify-content: flex-start;
+        padding-top: 2rem;
+        overflow-y: auto;
+    }
+}
+
+/* Layout responsivo para el Dashboard de Maestro */
+@media (min-width: 768px) {
+    #my-classes-list {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    #students-cards-container {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1rem;
+    }
+
+    .view-section {
+        padding-top: 2rem;
+    }
+}
+
+/* App-like Tabs fijas en la parte superior en móvil, pero normales en desktop */
+@media (max-width: 767px) {
+    #tab-navigation-container {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: #f9fafb;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+}
+
