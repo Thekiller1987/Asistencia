@@ -25,6 +25,7 @@ const appState = {
     currentRole: null, // 'Estudiante' | 'Maestro'
     scanner: null,
     listeners: [], // Suscripciones active de Firestore (sockets)
+    soundEnabled: true,
     // DB Cache
     globalData: { clases: [], solicitudes: [], asistencias: [], estudiantes: [] }
 };
@@ -35,6 +36,14 @@ const app = {
 
     init: () => {
         app.initSignaturePad();
+        
+        const savedSoundPref = localStorage.getItem('asist_sound_pref');
+        if (savedSoundPref !== null) {
+            appState.soundEnabled = savedSoundPref === 'true';
+        }
+        if (typeof app.updateSoundUI === 'function') {
+            app.updateSoundUI();
+        }
         
         document.getElementById('form-login').addEventListener('submit', app.handleLogin);
         document.getElementById('form-register').addEventListener('submit', app.handleRegister);
@@ -297,10 +306,43 @@ const app = {
     },
 
     playSound: (id) => {
+        if (appState.soundEnabled === false) return;
         const audio = document.getElementById(id);
         if (audio) {
             audio.currentTime = 0;
             audio.play().catch(e => console.log('Autoplay bloqueado', e));
+        }
+    },
+
+    updateSoundUI: () => {
+        const els = [
+            {on: 'icon-sound-on', off: 'icon-sound-off', text: 'text-sound-status'},
+            {on: 'icon-sound-on-role', off: 'icon-sound-off-role', text: 'text-sound-status-role'}
+        ];
+        els.forEach(group => {
+            const iconOn = document.getElementById(group.on);
+            const iconOff = document.getElementById(group.off);
+            const textStatus = document.getElementById(group.text);
+            if (iconOn && iconOff && textStatus) {
+                if (appState.soundEnabled) {
+                    iconOn.classList.remove('hidden');
+                    iconOff.classList.add('hidden');
+                    textStatus.innerText = 'Sonidos On';
+                } else {
+                    iconOn.classList.add('hidden');
+                    iconOff.classList.remove('hidden');
+                    textStatus.innerText = 'Sonidos Off';
+                }
+            }
+        });
+    },
+
+    toggleSound: () => {
+        appState.soundEnabled = !appState.soundEnabled;
+        localStorage.setItem('asist_sound_pref', appState.soundEnabled);
+        app.updateSoundUI();
+        if (appState.soundEnabled) {
+            app.playSound('success-sound');
         }
     },
 
