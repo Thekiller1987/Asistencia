@@ -1,0 +1,36 @@
+﻿diff --git a/index.html b/index.html
+index abe879a..a0c5f0a 100644
+--- a/index.html
++++ b/index.html
+@@ -114,6 +114,12 @@
+                         <span class="text-white font-medium text-xs tracking-wider uppercase">Acceso Administrativo</span>
+                     </button>
+                 </div>
++                
++                <button type="button" onclick="app.toggleSound()" class="mt-8 text-white/60 hover:text-white flex items-center justify-center gap-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full transition-all border border-white/10 backdrop-blur-sm shadow-sm">
++                    <svg id="icon-sound-on-role" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
++                    <svg id="icon-sound-off-role" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
++                    <span id="text-sound-status-role">Sonidos On</span>
++                </button>
+             </div>
+         </section>
+ 
+@@ -149,10 +155,17 @@
+                 </div>
+ 
+                 <div class="mt-4 text-center">
+-                    <button onclick="app.showView('view-role-selection')" class="text-gray-500 hover:text-gray-800 text-sm flex items-center justify-center w-full gap-1">
++                    <button onclick="app.showView('view-role-selection')" class="text-gray-500 hover:text-gray-800 text-sm flex items-center justify-center w-full gap-1 mb-4">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                         Volver
+                     </button>
++                    <div class="border-t border-gray-100 pt-4 flex justify-center">
++                        <button type="button" onclick="app.toggleSound()" class="text-gray-400 hover:text-gray-700 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-50 border border-transparent hover:border-gray-200">
++                            <svg id="icon-sound-on" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-unan-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
++                            <svg id="icon-sound-off" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
++                            <span id="text-sound-status">Sonidos On</span>
++                        </button>
++                    </div>
+                 </div>
+             </div>
+         </section>

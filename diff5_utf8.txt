@@ -1,0 +1,330 @@
+﻿commit 5f933a7e58eb6fbdb5559a953bff9c13d2bfc380
+Author: waskar <waskareliasrios11@gmail.com>
+Date:   Mon Mar 23 08:17:55 2026 -0600
+
+    sonidos
+
+diff --git a/index.html b/index.html
+index abe879a..a0c5f0a 100644
+--- a/index.html
++++ b/index.html
+@@ -114,6 +114,12 @@
+                         <span class="text-white font-medium text-xs tracking-wider uppercase">Acceso Administrativo</span>
+                     </button>
+                 </div>
++                
++                <button type="button" onclick="app.toggleSound()" class="mt-8 text-white/60 hover:text-white flex items-center justify-center gap-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full transition-all border border-white/10 backdrop-blur-sm shadow-sm">
++                    <svg id="icon-sound-on-role" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
++                    <svg id="icon-sound-off-role" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
++                    <span id="text-sound-status-role">Sonidos On</span>
++                </button>
+             </div>
+         </section>
+ 
+@@ -149,10 +155,17 @@
+                 </div>
+ 
+                 <div class="mt-4 text-center">
+-                    <button onclick="app.showView('view-role-selection')" class="text-gray-500 hover:text-gray-800 text-sm flex items-center justify-center w-full gap-1">
++                    <button onclick="app.showView('view-role-selection')" class="text-gray-500 hover:text-gray-800 text-sm flex items-center justify-center w-full gap-1 mb-4">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                         Volver
+                     </button>
++                    <div class="border-t border-gray-100 pt-4 flex justify-center">
++                        <button type="button" onclick="app.toggleSound()" class="text-gray-400 hover:text-gray-700 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-50 border border-transparent hover:border-gray-200">
++                            <svg id="icon-sound-on" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-unan-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
++                            <svg id="icon-sound-off" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
++                            <span id="text-sound-status">Sonidos On</span>
++                        </button>
++                    </div>
+                 </div>
+             </div>
+         </section>
+
+commit 3938aae966907f70129c1b48049e826559f379e2
+Author: waskar <waskareliasrios11@gmail.com>
+Date:   Wed Mar 18 00:33:06 2026 -0600
+
+    feat: native exceljs export for base64 signature images
+
+diff --git a/index.html b/index.html
+index bd50c21..abe879a 100644
+--- a/index.html
++++ b/index.html
+@@ -56,6 +56,7 @@
+     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+     <script defer src="https://unpkg.com/html5-qrcode"></script>
+     <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
++    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+ </head>
+ <body class="text-gray-800 font-sans min-h-screen flex flex-col items-center select-none bg-unan-blue overflow-x-hidden">
+     <!-- Offline Banner -->
+
+commit 4c612a11a4f38de90bb25aeba40d1f461bf9e05e
+Author: waskar <waskareliasrios11@gmail.com>
+Date:   Wed Mar 18 00:16:12 2026 -0600
+
+    fix: scanner button scroll issue
+
+diff --git a/index.html b/index.html
+index 9f363d1..bd50c21 100644
+--- a/index.html
++++ b/index.html
+@@ -334,9 +334,9 @@
+ 
+                 <!-- Scanner Container -->
+                 <div id="scanner-container" class="hidden fixed inset-0 z-[120] overflow-y-auto no-scrollbar scanner-gradient">
+-                    <div class="min-h-screen flex flex-col items-center justify-center p-4 gap-12 sm:gap-16">
++                    <div class="min-h-[100dvh] flex flex-col items-center justify-center py-10 px-4 gap-16">
+                         <!-- El Cuadro del Esc├íner (Mantiene todo unido) -->
+-                        <div class="relative w-[280px] h-[280px] flex-shrink-0 mt-8">
++                        <div class="relative w-[280px] h-[280px] flex-shrink-0">
+                             <!-- 1. El Lector de C├ímara -->
+                             <div id="reader" class="absolute inset-0 bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10"></div>
+                             
+@@ -366,7 +366,7 @@
+                         </div>
+ 
+                         <!-- Bot├│n Cancelar (Flujo normal) -->
+-                        <div class="w-full flex justify-center px-6 pb-8">
++                        <div class="w-full flex justify-center">
+                             <button onclick="app.stopScanner()" class="w-full max-w-[280px] bg-red-500/90 hover:bg-red-600 text-white rounded-2xl py-4 shadow-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/20 tracking-widest text-sm backdrop-blur-md">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                                 CANCELAR
+
+commit fa0f197505f094d1450e47f601249b6d4a1f82de
+Author: waskar <waskareliasrios11@gmail.com>
+Date:   Wed Mar 18 00:13:22 2026 -0600
+
+    migracion firebaser
+
+diff --git a/index.html b/index.html
+index e058be2..9f363d1 100644
+--- a/index.html
++++ b/index.html
+@@ -333,14 +333,10 @@
+                 </div>
+ 
+                 <!-- Scanner Container -->
+-                <div id="scanner-container" class="hidden fixed inset-0 z-50 overflow-hidden scanner-gradient">
+-                    
+-                    <!-- Wrapper para centrado total -->
+-                    <div class="absolute inset-0 flex items-center justify-center p-6">
+-                        
++                <div id="scanner-container" class="hidden fixed inset-0 z-[120] overflow-y-auto no-scrollbar scanner-gradient">
++                    <div class="min-h-screen flex flex-col items-center justify-center p-4 gap-12 sm:gap-16">
+                         <!-- El Cuadro del Esc├íner (Mantiene todo unido) -->
+-                        <div class="relative w-[280px] h-[280px] flex-shrink-0">
+-                            
++                        <div class="relative w-[280px] h-[280px] flex-shrink-0 mt-8">
+                             <!-- 1. El Lector de C├ímara -->
+                             <div id="reader" class="absolute inset-0 bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10"></div>
+                             
+@@ -362,20 +358,20 @@
+                             </div>
+                             
+                             <!-- 3. Etiqueta Inferior -->
+-                            <div class="absolute -bottom-20 left-0 right-0 flex justify-center">
++                            <div class="absolute -bottom-16 left-0 right-0 flex justify-center">
+                                 <p class="text-white text-[11px] font-black bg-unan-blue/90 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 tracking-[0.2em] uppercase whitespace-nowrap shadow-2xl">
+                                     Alinea el c├│digo QR
+                                 </p>
+                             </div>
+                         </div>
+-                    </div>
+ 
+-                    <!-- Bot├│n Cancelar (Fijo abajo) -->
+-                    <div class="absolute bottom-12 left-0 right-0 flex justify-center px-6">
+-                        <button onclick="app.stopScanner()" class="w-full max-w-xs bg-red-500/90 hover:bg-red-600 text-white rounded-2xl py-4 shadow-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/20 tracking-widest text-sm backdrop-blur-md">
+-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+-                            CANCELAR
+-                        </button>
++                        <!-- Bot├│n Cancelar (Flujo normal) -->
++                        <div class="w-full flex justify-center px-6 pb-8">
++                            <button onclick="app.stopScanner()" class="w-full max-w-[280px] bg-red-500/90 hover:bg-red-600 text-white rounded-2xl py-4 shadow-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/20 tracking-widest text-sm backdrop-blur-md">
++                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
++                                CANCELAR
++                            </button>
++                        </div>
+                     </div>
+                 </div>
+ 
+@@ -470,48 +466,11 @@
+                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                         <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+                             <h3 class="font-extrabold text-gray-800 text-xl">Gesti├│n de Clases</h3>
+-                            <button onclick="document.getElementById('new-class-form-container').classList.toggle('hidden')" class="w-full sm:w-auto bg-unan-blue hover:bg-unan-light text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all flex justify-center items-center gap-2">
++                            <button onclick="document.getElementById('modal-new-class').classList.remove('hidden'); document.getElementById('modal-new-class').classList.add('flex');" class="w-full sm:w-auto bg-unan-blue hover:bg-unan-light text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all flex justify-center items-center gap-2">
+                                 <span class="bg-white/20 w-6 h-6 rounded-full flex justify-center items-center">+</span> Crear Nueva Clase
+                             </button>
+                         </div>
+-                        <div id="new-class-form-container" class="hidden space-y-5 border-t border-gray-100 pt-6 mt-2 bg-gray-50 p-4 rounded-2xl">
+-                            <div class="flex justify-between items-center mb-2">
+-                                <h4 class="font-bold text-gray-700">Nueva Clase</h4>
+-                                <button onclick="document.getElementById('new-class-form-container').classList.add('hidden')" class="text-gray-400 hover:text-red-500">
+-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+-                                </button>
+-                            </div>
+-                            <div>
+-                                <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Materia</label>
+-                                <input type="text" id="new-class-name" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all" placeholder="Ej: Desarrollo Web Avanzado">
+-                            </div>
+-                            <div class="grid grid-cols-2 gap-4">
+-                                <div>
+-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Inicio</label>
+-                                    <input type="date" id="new-class-start-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
+-                                </div>
+-                                <div>
+-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Fin</label>
+-                                    <input type="date" id="new-class-end-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
+-                                </div>
+-                            </div>
+-                            <p class="text-xs text-gray-400 -mt-2">El sistema agendar├í clases s├│lo en los d├¡as seleccionados dentro de este rango.</p>
+-                            <div>
+-                                <label class="block text-sm font-bold text-gray-700 mb-2">D├¡as Impartidos</label>
+-                                <div class="flex flex-wrap gap-2" id="class-days-selector">
+-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="L" class="hidden"> L</label>
+-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="M" class="hidden"> M</label>
+-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="X" class="hidden"> Mi</label>
+-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="J" class="hidden"> J</label>
+-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="V" class="hidden"> V</label>
+-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="S" class="hidden"> S</label>
+-                                    <label class="flex items-center gap-2 bg-gray-50 border-2 border-transparent px-4 py-2 rounded-xl cursor-pointer text-sm font-medium hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="D" class="hidden"> D</label>
+-                                </div>
+-                            </div>
+-                            <button onclick="app.createClass()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-bold py-3.5 rounded-xl shadow-[0_4px_12px_rgba(0,33,87,0.3)] transition-all transform active:scale-95 flex justify-center items-center gap-2">
+-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> Guardar Clase en Servidor
+-                            </button>
+-                        </div>
++                        <!-- Espacio reservado para las tarjetas de clase (el formulario fue movido a Modal) -->
+                     </div>
+                     
+                     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col pt-4">
+@@ -685,6 +644,53 @@
+ 
+     </main>
+ 
++    <!-- Modal: Crear Nueva Clase -->
++    <div id="modal-new-class" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-fade-in custom-scroll">
++        <div class="bg-white w-full max-w-lg p-6 rounded-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar">
++            <button onclick="document.getElementById('modal-new-class').classList.add('hidden'); document.getElementById('modal-new-class').classList.remove('flex');" class="absolute top-4 right-4 bg-gray-100 text-gray-500 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all">
++                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
++            </button>
++            
++            <h2 class="text-2xl font-black text-gray-800 mb-6">Crear Nueva Clase</h2>
++            
++            <div class="space-y-5">
++                <div>
++                    <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Materia</label>
++                    <input type="text" id="new-class-name" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all" placeholder="Ej: Desarrollo Web Avanzado">
++                </div>
++                <div class="grid grid-cols-2 gap-4">
++                    <div>
++                        <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Inicio</label>
++                        <input type="date" id="new-class-start-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
++                    </div>
++                    <div>
++                        <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Fin</label>
++                        <input type="date" id="new-class-end-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-unan-blue focus:ring-0 outline-none transition-all">
++                    </div>
++                </div>
++                <p class="text-[10px] sm:text-xs text-gray-400 -mt-2">El sistema agendar├í clases s├│lo en los d├¡as seleccionados dentro de este rango.</p>
++                <div>
++                    <label class="block text-sm font-bold text-gray-700 mb-2">D├¡as Impartidos</label>
++                    <div class="flex flex-wrap gap-2" id="class-days-selector">
++                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="L" class="hidden"> L</label>
++                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="M" class="hidden"> M</label>
++                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="X" class="hidden"> Mi</label>
++                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="J" class="hidden"> J</label>
++                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="V" class="hidden"> V</label>
++                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="S" class="hidden"> S</label>
++                        <label class="flex items-center justify-center w-10 h-10 bg-gray-50 border-2 border-transparent rounded-xl cursor-pointer text-sm font-bold hover:bg-gray-100 transition-all has-[:checked]:border-unan-blue has-[:checked]:bg-blue-50 has-[:checked]:text-unan-blue"><input type="checkbox" value="D" class="hidden"> D</label>
++                    </div>
++                </div>
++                
++                <div class="pt-4 border-t border-gray-100">
++                    <button onclick="app.createClass()" class="w-full bg-unan-blue hover:bg-unan-light text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95 flex justify-center items-center gap-2">
++                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg> Guardar Clase en Servidor
++                    </button>
++                </div>
++            </div>
++        </div>
++    </div>
++
+     <!-- Modal: Editar Perfil Estudiante -->
+     <div id="modal-edit-profile" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-fade-in">
+         <div class="bg-white w-full max-w-md p-8 rounded-3xl shadow-2xl relative">
+
+commit 9cd23843f00237b29f17646db65bd0ad2b182691
+Author: waskar <waskareliasrios11@gmail.com>
+Date:   Wed Mar 18 00:00:45 2026 -0600
+
+    migracion firebaser
+
+diff --git a/index.html b/index.html
+index 7dbf305..e058be2 100644
+--- a/index.html
++++ b/index.html
+@@ -254,7 +254,7 @@
+                         <div class="flex-grow">
+                             <div class="flex items-center justify-center sm:justify-between">
+                                 <h2 class="text-2xl font-black tracking-tight" id="student-name">Cargando...</h2>
+-                                <button onclick="app.openEditProfile()" class="hidden sm:block p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all border border-white/10 backdrop-blur-md">
++                                <button onclick="app.openEditProfile()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all border border-white/10 backdrop-blur-md">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                 </button>
+                             </div>
+@@ -339,7 +339,7 @@
+                     <div class="absolute inset-0 flex items-center justify-center p-6">
+                         
+                         <!-- El Cuadro del Esc├íner (Mantiene todo unido) -->
+-                        <div class="relative w-[280px] h-[280px]">
++                        <div class="relative w-[280px] h-[280px] flex-shrink-0">
+                             
+                             <!-- 1. El Lector de C├ímara -->
+                             <div id="reader" class="absolute inset-0 bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10"></div>
+@@ -353,17 +353,17 @@
+                                 <div class="absolute -bottom-2 -right-2 w-14 h-14 border-b-[8px] border-r-[8px] border-unan-accent rounded-br-[2rem]"></div>
+                                 
+                                 <!-- Logo Watermark -->
+-                                <div class="absolute inset-0 flex items-center justify-center">
+-                                    <img src="./logo.png" alt="Logo" class="w-24 h-24 object-contain grayscale invert brightness-200 opacity-40 drop-shadow-2xl">
++                                <div class="absolute inset-0 flex items-center justify-center text-center opacity-40">
++                                    <img src="./logo.png" alt="Logo" class="w-24 h-24 object-contain grayscale invert brightness-200 drop-shadow-2xl">
+                                 </div>
+-
++                                
+                                 <!-- L├¡nea de Escaneo -->
+                                 <div class="scanline"></div>
+                             </div>
+-
++                            
+                             <!-- 3. Etiqueta Inferior -->
+                             <div class="absolute -bottom-20 left-0 right-0 flex justify-center">
+-                                <p class="text-white text-[10px] font-black bg-unan-blue/90 backdrop-blur-md px-6 py-2.5 rounded-full border border-white/20 tracking-[0.2em] uppercase whitespace-nowrap shadow-xl">
++                                <p class="text-white text-[11px] font-black bg-unan-blue/90 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 tracking-[0.2em] uppercase whitespace-nowrap shadow-2xl">
+                                     Alinea el c├│digo QR
+                                 </p>
+                             </div>
+diff --git a/style.css b/style.css
+index c999249..fa4c8ce 100644
+--- a/style.css
++++ b/style.css
+@@ -16,7 +16,7 @@ body.no-scroll {
+     height: 100dvh;
+     position: fixed;
+     width: 100%;
+-    touch-action: none; /* Prevenir scroll por toque */
++    touch-action: none;
+ }
+ 
+ /* Glass effect pane */
+@@ -90,6 +90,8 @@ div:where(.swal2-container) {
+ }
+ #scanner-container video {
+     object-fit: cover !important;
++    width: 100% !important;
++    height: 100% !important;
+ }
+ 
+ /* App-like feel: evitar selecci├│n de texto en controles */

@@ -228,3 +228,9 @@ button, .cursor-pointer, select, input[type="submit"] {
     }
 }
 
+/* Enforce max-width to prevent iOS from zooming out when children are wider */
+html, body {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+}
+
