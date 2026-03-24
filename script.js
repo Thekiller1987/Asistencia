@@ -2,7 +2,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYclYUQE3T7wd125LJmMGb
 
 // --- CONFIGURACIÓN FIREBASE ---
 const firebaseConfig = {
-    apiKey: "AIzaSyAehZ3Mn__RbrOfCEJq2bPMQwb4nQ6ZIIw",
+    apiKey: "AIzaSyC3fkuDlY7zjgxufgVEO9qkpmjlJvS9-g8",
     authDomain: "asistenica-unan.firebaseapp.com",
     projectId: "asistenica-unan",
     storageBucket: "asistenica-unan.firebasestorage.app",
