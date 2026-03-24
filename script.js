@@ -1,5 +1,16 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYclYUQE3T7wd125LJmMGbrak-ybYyw_MAjGV9znDw2JgYECqnR6lG0vF0RFQ58k7D4w/exec';
 
+// --- ESTADO GLOBAL ---
+const appState = {
+    user: null, 
+    currentRole: null, 
+    scanner: null,
+    listeners: [], 
+    soundEnabled: true,
+    editSignaturePad: null,
+    globalData: { clases: [], solicitudes: [], asistencias: [], estudiantes: [] }
+};
+
 // --- CONFIGURACIÓN FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyC3fkuDlY7zjgxufgVEO9qkpmjlJvS9-g8",
@@ -11,23 +22,24 @@ const firebaseConfig = {
     measurementId: "G-D7NLM9N6ER"
 };
 
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const analytics = firebase.analytics();
+let db, auth, analytics;
 
-// Habilitar persistencia offline para que la app sea instantánea
-db.enablePersistence().catch(err => console.error("Error persistencia:", err.code));
-
-const appState = {
-    user: null, // { nombre, usuario, carnet, carrera, rol, id, googleEmail }
-    currentRole: null, // 'Estudiante' | 'Maestro'
-    scanner: null,
-    listeners: [], 
-    soundEnabled: true,
-    editSignaturePad: null,
-    globalData: { clases: [], solicitudes: [], asistencias: [], estudiantes: [] }
-};
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    analytics = firebase.analytics();
+    
+    db.enablePersistence().catch(err => {
+        if (err.code == 'failed-precondition') {
+            console.warn("Más de una pestaña iniciada, persistencia solo en una.");
+        } else if (err.code == 'unimplemented') {
+            console.warn("Navegador no soporta persistencia offline.");
+        }
+    });
+} catch (error) {
+    console.error("Error inicializando Firebase:", error);
+}
 
 // --- CORE APP LOGIC ---
 const app = {
