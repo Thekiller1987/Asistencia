@@ -784,53 +784,45 @@ const app = {
     },
 
     startScanner: async () => {
-        const container = document.getElementById('scanner-container');
-        container.classList.remove('hidden');
+        // Enfoque nativo: simplemente activamos el input de archivo
+        const fileInput = document.getElementById('qr-input-file');
+        if (fileInput) fileInput.click();
+    },
 
+    handleFileSelect: async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        app.showLoader('Escaneando Foto...');
+        
+        // Usar Html5Qrcode para escanear el archivo
+        // "reader" es el div que ya existe en el HTML
+        const html5QrCode = new Html5Qrcode("reader");
+        
         try {
-            const cameras = await Html5Qrcode.getCameras();
-            if (!cameras || cameras.length === 0) {
-                throw new Error("No se detectaron cámaras");
-            }
+            const decodedText = await html5QrCode.scanFile(file, true);
+            app.hideLoader();
+            app.playSound('success-sound');
+            
+            let idClase = decodedText;
+            let tokenQr = null;
+            try {
+                const parsed = JSON.parse(decodedText);
+                if (parsed.clase) {
+                    idClase = parsed.clase;
+                    tokenQr = parsed.token;
+                }
+            } catch(e) {}
 
-            // Lógica para elegir la mejor cámara (evitando gran angular)
-            // Normalmente la principal es la primera trasea o la que tiene etiqueta standard
-            let primaryCamera = cameras.find(c => 
-                c.label.toLowerCase().includes('back') && 
-                !c.label.toLowerCase().includes('wide') && 
-                !c.label.toLowerCase().includes('ultra')
-            ) || cameras.find(c => c.label.toLowerCase().includes('back')) || cameras[0];
-
-            console.log("Cámara seleccionada:", primaryCamera.label);
-
-            const html5QrCode = new Html5Qrcode("reader");
-            appState.scanner = html5QrCode;
-
-            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
-
-            await html5QrCode.start(primaryCamera.id, config, async (decodedText) => {
-                app.stopScanner();
-                app.playSound('success-sound');
-                
-                let idClase = decodedText;
-                let tokenQr = null;
-                try {
-                    const parsed = JSON.parse(decodedText);
-                    if (parsed.clase) {
-                        idClase = parsed.clase;
-                        tokenQr = parsed.token;
-                    }
-                } catch(e) {}
-
-                app.markAttendance(idClase, tokenQr);
-            }, (errorMessage) => {
-                // Errores de escaneo comunes se ignoran para no saturar
-            });
-
+            app.markAttendance(idClase, tokenQr);
+            
+            // Limpiar input
+            event.target.value = '';
         } catch (err) {
-            console.error(err);
-            container.classList.add('hidden');
-            app.alertError('Cámara', 'No se puede acceder a la cámara o no se encontró una adecuada.');
+            app.hideLoader();
+            console.error("Error QR:", err);
+            app.alertError('QR No Detectado', 'No pudimos encontrar un código QR en la foto. Intenta tomarla más de cerca y con buena luz.');
+            event.target.value = '';
         }
     },
 
@@ -851,12 +843,7 @@ const app = {
     },
 
     stopScanner: () => {
-        if (appState.scanner) {
-            appState.scanner.stop().then(() => {
-                appState.scanner.clear();
-                appState.scanner = null;
-            }).catch(e => console.log(e));
-        }
+        // En el flujo nativo no hay stream que detener
         document.getElementById('scanner-container').classList.add('hidden');
     },
 

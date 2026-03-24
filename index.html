@@ -313,9 +313,11 @@
                     <h3 class="text-xl font-black text-gray-800 mb-2">Asistencia Rápida</h3>
                     <p class="text-gray-500 text-sm mb-8 leading-relaxed max-w-xs">Alinea el código QR proyectado por tu docente para registrarte al instante.</p>
                     
-                    <button onclick="app.startScanner()" class="w-full bg-[#002157] hover:bg-[#002d7a] text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-900/20 hover:shadow-blue-900/30 transition-all duration-300 transform active:scale-95 flex justify-center items-center gap-3 text-lg">
+                    <input type="file" id="qr-input-file" accept="image/*" capture="environment" class="hidden" onchange="app.handleFileSelect(event)">
+                    
+                    <button onclick="document.getElementById('qr-input-file').click()" class="w-full bg-[#002157] hover:bg-[#002d7a] text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-900/20 hover:shadow-blue-900/30 transition-all duration-300 transform active:scale-95 flex justify-center items-center gap-3 text-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        INICIAR ESCÁNER
+                        TOMAR FOTO QR
                     </button>
 
                     <!-- Grid for Classes and Enrollment -->
