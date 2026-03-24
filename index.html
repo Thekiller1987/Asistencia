@@ -78,6 +78,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Instalar App
             </button>
+            <button id="btn-toggle-sound-nav" class="text-white hover:text-unan-accent transition-colors flex items-center gap-2 text-sm font-medium" title="Alternar Sonido">
+                <svg id="icon-sound-on-nav" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                <svg id="icon-sound-off-nav" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+            </button>
             <button id="btn-logout" class="text-white hover:text-unan-accent transition-colors flex items-center gap-2 text-sm font-medium">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -139,11 +143,32 @@
                     </div>
                     <div>
                         <label for="login-pass" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                        <input type="password" id="login-pass" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-unan-light focus:border-unan-light outline-none transition-all placeholder-gray-400" placeholder="••••••••">
+                        <div class="relative">
+                            <input type="password" id="login-pass" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-unan-light focus:border-unan-light outline-none transition-all placeholder-gray-400" placeholder="••••••••">
+                            <button type="button" onclick="app.togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none" title="Mostrar/Ocultar">
+                                <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                <svg id="icon-eye-closed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2 mt-3">
+                            <input type="checkbox" id="login-keep-session" class="w-4 h-4 text-unan-blue border-gray-300 rounded focus:ring-unan-light cursor-pointer">
+                            <label for="login-keep-session" class="text-xs text-gray-600 cursor-pointer select-none font-medium">Mantener sesión iniciada</label>
+                        </div>
                     </div>
                     
                     <button type="submit" class="w-full bg-unan-blue hover:bg-unan-light text-white font-medium py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform active:scale-95 flex justify-center items-center h-12">
-                        <span>Ingresar</span>
+                        <span>Ingresar con Usuario</span>
+                    </button>
+
+                    <div class="flex items-center gap-3 my-4">
+                        <hr class="flex-grow border-gray-100">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">O continuar con</span>
+                        <hr class="flex-grow border-gray-100">
+                    </div>
+
+                    <button type="button" onclick="app.handleGoogleLogin()" class="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg border border-gray-200 shadow-sm transition-all duration-200 transform active:scale-95 flex justify-center items-center gap-3 h-12">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        <span>Google</span>
                     </button>
                 </form>
                 
@@ -395,12 +420,14 @@
         <section id="view-dashboard-master" class="view-section min-h-full bg-gray-50 flex-col items-center pb-20 pt-4 px-4 w-full">
             <div class="w-full max-w-4xl mx-auto flex flex-col gap-6 animate-fade-in-up">
                 
-                <!-- Teacher Header -->
                 <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                     <div>
                         <h2 class="text-xl font-bold text-gray-800" id="master-name">Cargando...</h2>
                         <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-unan-blue rounded-md">Panel de Control</span>
                     </div>
+                    <button onclick="app.openEditProfile()" class="p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all border border-gray-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
                 </div>
 
                 <!-- Tabs -->
@@ -739,7 +766,23 @@
                     </select>
                 </div>
                 
-                <div class="pt-4">
+                <div class="pt-4 space-y-3">
+                    <button type="button" onclick="app.linkWithGoogle()" id="btn-link-google" class="w-full bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 rounded-xl border-2 border-gray-200 flex items-center justify-center gap-2 transition-all active:scale-95">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        <span id="text-link-google">Vincular con Google</span>
+                    </button>
+
+                    <!-- Nueva Firma (Solo Estudiantes) -->
+                    <div id="edit-signature-container" class="hidden">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 mt-4">Actualizar Firma (Opcional)</label>
+                        <div class="border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden bg-gray-50 relative">
+                            <canvas id="edit-signature-pad" class="w-full h-32 touch-none cursor-crosshair"></canvas>
+                            <button type="button" id="btn-clear-edit-sig" class="absolute bottom-2 right-2 bg-white/80 p-1.5 rounded-full shadow text-gray-600 hover:text-red-500 text-xs flex items-center gap-1 backdrop-blur-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
                     <button type="submit" class="w-full bg-unan-blue hover:bg-unan-light text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-95">
                         GUARDAR CAMBIOS
                     </button>
@@ -790,6 +833,7 @@
     <!-- Firebase SDKs (Compatibility Mode for faster migration) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
 
     <script src="./script.js"></script>

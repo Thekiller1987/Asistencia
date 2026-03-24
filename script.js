@@ -19,14 +19,13 @@ const analytics = firebase.analytics();
 // Habilitar persistencia offline para que la app sea instantánea
 db.enablePersistence().catch(err => console.error("Error persistencia:", err.code));
 
-// ESTADO EN MEMORIA (Requisito: Cero LocalStorage)
 const appState = {
-    user: null, // { nombre, usuario, carnet, carrera, rol, id }
+    user: null, // { nombre, usuario, carnet, carrera, rol, id, googleEmail }
     currentRole: null, // 'Estudiante' | 'Maestro'
     scanner: null,
-    listeners: [], // Suscripciones active de Firestore (sockets)
+    listeners: [], 
     soundEnabled: true,
-    // DB Cache
+    editSignaturePad: null,
     globalData: { clases: [], solicitudes: [], asistencias: [], estudiantes: [] }
 };
 
@@ -41,9 +40,6 @@ const app = {
         if (savedSoundPref !== null) {
             appState.soundEnabled = savedSoundPref === 'true';
         }
-        if (typeof app.updateSoundUI === 'function') {
-            app.updateSoundUI();
-        }
         
         document.getElementById('form-login').addEventListener('submit', app.handleLogin);
         document.getElementById('form-register').addEventListener('submit', app.handleRegister);
@@ -52,6 +48,7 @@ const app = {
         document.getElementById('btn-logout').addEventListener('click', app.logout);
         document.getElementById('btn-install').addEventListener('click', app.installPWA);
         document.getElementById('form-edit-profile').addEventListener('submit', app.handleEditProfile);
+        document.getElementById('btn-toggle-sound-nav').addEventListener('click', app.toggleSound);
         
         window.addEventListener('online', app.handleNetworkChange);
         window.addEventListener('offline', app.handleNetworkChange);
@@ -69,8 +66,33 @@ const app = {
                 .catch(err => console.error('SW Falló', err));
         }
 
-        // Asegurar Super Usuario inicial (waskar/1987)
+        app.initEditSignaturePad();
+        app.updateSoundUI();
         app.ensureSuperUser();
+
+        // --- SESIÓN PERSISTENTE ---
+        const savedSession = localStorage.getItem('asist_session');
+        if (savedSession) {
+            try {
+                const userData = JSON.parse(savedSession);
+                appState.user = userData;
+                app.startRealTimeSync();
+                
+                if (userData.rol === 'maestro') {
+                    app.loadMasterData();
+                } else if (userData.rol === 'Super Admin') {
+                    app.showView('view-dashboard-superadmin');
+                } else {
+                    app.loadStudentData();
+                }
+            } catch (e) {
+                console.error("Error al restaurar sesión:", e);
+                localStorage.removeItem('asist_session');
+                app.showView('view-role-selection');
+            }
+        } else {
+            app.showView('view-role-selection');
+        }
     },
 
     ensureSuperUser: async () => {
@@ -188,12 +210,32 @@ const app = {
     openEditProfile: () => {
         document.getElementById('edit-name').value = appState.user.nombre;
         document.getElementById('edit-user').value = appState.user.usuario;
-        document.getElementById('edit-carnet').value = appState.user.carnet;
-        document.getElementById('edit-carrera').value = appState.user.carrera;
         
+        const carnetEl = document.getElementById('edit-carnet');
+        const carreraEl = document.getElementById('edit-carrera');
+        const sigContainer = document.getElementById('edit-signature-container');
+        const linkBtn = document.getElementById('text-link-google');
+
+        if (appState.user.rol === 'estudiante') {
+            carnetEl.parentElement.classList.remove('hidden');
+            carreraEl.parentElement.classList.remove('hidden');
+            sigContainer.classList.remove('hidden');
+            carnetEl.value = appState.user.carnet || '';
+            carreraEl.value = appState.user.carrera || '';
+        } else {
+            carnetEl.parentElement.classList.add('hidden');
+            carreraEl.parentElement.classList.add('hidden');
+            sigContainer.classList.add('hidden');
+        }
+
+        linkBtn.innerText = appState.user.googleEmail ? `Vinculado: ${appState.user.googleEmail}` : 'Vincular con Google';
+
         const modal = document.getElementById('modal-edit-profile');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        
+        // Redibujar canvas tras mostrar modal
+        setTimeout(() => app.clearEditSignature(), 100);
     },
 
     closeEditProfile: () => {
@@ -206,26 +248,30 @@ const app = {
         e.preventDefault();
         const nombre = document.getElementById('edit-name').value.trim();
         const usuario = document.getElementById('edit-user').value.trim();
-        const carnet = document.getElementById('edit-carnet').value.trim();
-        const carrera = document.getElementById('edit-carrera').value;
+        const updates = { nombre, usuario };
+
+        if (appState.user.rol === 'estudiante') {
+            updates.carnet = document.getElementById('edit-carnet').value.trim();
+            updates.carrera = document.getElementById('edit-carrera').value;
+            
+            const newSig = app.getEditSignatureData();
+            if (newSig) updates.firma = newSig;
+        }
 
         try {
             app.showLoader('Actualizando perfil...');
-            await db.collection('users').doc(appState.user.id).update({
-                nombre,
-                usuario,
-                carnet,
-                carrera
-            });
+            await db.collection('users').doc(appState.user.id).update(updates);
 
             // Actualizar estado local
-            appState.user.nombre = nombre;
-            appState.user.usuario = usuario;
-            appState.user.carnet = carnet;
-            appState.user.carrera = carrera;
+            Object.assign(appState.user, updates);
 
             // Refrescar UI
-            app.loadStudentData();
+            if (appState.user.rol === 'maestro') {
+                document.getElementById('master-name').innerText = `Profe. ${appState.user.nombre}`;
+            } else {
+                app.loadStudentData();
+            }
+            
             app.hideLoader();
             app.closeEditProfile();
             app.alertSuccess('Perfil Actualizado', 'Tu información ha sido guardada con éxito.');
@@ -233,6 +279,87 @@ const app = {
             app.hideLoader();
             console.error(error);
             app.alertError('Error', 'No se pudieron guardar los cambios.');
+        }
+    },
+
+    linkWithGoogle: async () => {
+        try {
+            app.showLoader('Conectando con Google...');
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await firebase.auth().signInWithPopup(provider);
+            const email = result.user.email;
+
+            // Verificar si este email ya está en uso por otro usuario
+            const query = await db.collection('users').where('googleEmail', '==', email).get();
+            if (!query.empty && query.docs[0].id !== appState.user.id) {
+                app.hideLoader();
+                app.alertError('Error', 'Este correo de Google ya está vinculado a otra cuenta.');
+                return;
+            }
+
+            await db.collection('users').doc(appState.user.id).update({ googleEmail: email });
+            appState.user.googleEmail = email;
+            document.getElementById('text-link-google').innerText = `Vinculado: ${email}`;
+
+            app.hideLoader();
+            app.alertSuccess('Vinculación Exitosa', `Tu cuenta ahora está asociada a ${email}`);
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo vincular la cuenta.');
+        }
+    },
+
+    handleGoogleLogin: async () => {
+        try {
+            app.showLoader('Autenticando...');
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await firebase.auth().signInWithPopup(provider);
+            const email = result.user.email;
+
+            const query = await db.collection('users').where('googleEmail', '==', email).get();
+            if (query.empty) {
+                app.hideLoader();
+                app.alertError('Cuenta no encontrada', 'Este correo de Google no está vinculado a ninguna cuenta. Por favor, inicia sesión normalmente y vincúlalo en tu perfil.');
+                return;
+            }
+
+            const doc = query.docs[0];
+            const userData = { id: doc.id, ...doc.data() };
+            
+            // Validar rol actual (si se seleccionó uno en la vista previa)
+            const chosenRole = appState.currentRole; // 'Estudiante', 'Maestro'
+            if (chosenRole === 'Estudiante' && userData.rol !== 'estudiante') {
+                app.hideLoader();
+                app.alertError('Rol Incorrecto', 'Esta cuenta es de nivel MAESTRO.');
+                return;
+            }
+            if (chosenRole === 'Maestro' && userData.rol !== 'maestro') {
+                app.hideLoader();
+                app.alertError('Rol Incorrecto', 'Esta cuenta es de nivel ESTUDIANTE.');
+                return;
+            }
+
+            appState.user = userData;
+            
+            // Persistencia
+            const keepSession = document.getElementById('login-keep-session').checked;
+            if (keepSession) {
+                localStorage.setItem('asist_session', JSON.stringify(appState.user));
+            }
+
+            app.hideLoader();
+            app.playSound('success-sound');
+            app.startRealTimeSync();
+
+            if (userData.rol === 'maestro') app.loadMasterData();
+            else if (userData.rol === 'Super Admin') app.showView('view-dashboard-superadmin');
+            else app.loadStudentData();
+
+        } catch (error) {
+            app.hideLoader();
+            console.error(error);
+            app.alertError('Error', 'No se pudo iniciar sesión con Google.');
         }
     },
 
@@ -287,11 +414,11 @@ const app = {
         appState.currentRole = null;
         appState.globalData = { clases: [], solicitudes: [], asistencias: [], estudiantes: [] };
         
+        localStorage.removeItem('asist_session');
+        
         if (appState.scanner) app.stopScanner();
         
-        // Limpiar el body del bloqueo de scroll
         document.body.classList.remove('no-scroll');
-        
         app.showView('view-role-selection');
         app.playSound('success-sound');
     },
@@ -317,21 +444,22 @@ const app = {
     updateSoundUI: () => {
         const els = [
             {on: 'icon-sound-on', off: 'icon-sound-off', text: 'text-sound-status'},
-            {on: 'icon-sound-on-role', off: 'icon-sound-off-role', text: 'text-sound-status-role'}
+            {on: 'icon-sound-on-role', off: 'icon-sound-off-role', text: 'text-sound-status-role'},
+            {on: 'icon-sound-on-nav', off: 'icon-sound-off-nav'}
         ];
         els.forEach(group => {
             const iconOn = document.getElementById(group.on);
             const iconOff = document.getElementById(group.off);
-            const textStatus = document.getElementById(group.text);
-            if (iconOn && iconOff && textStatus) {
+            const textStatus = group.text ? document.getElementById(group.text) : null;
+            if (iconOn && iconOff) {
                 if (appState.soundEnabled) {
                     iconOn.classList.remove('hidden');
                     iconOff.classList.add('hidden');
-                    textStatus.innerText = 'Sonidos On';
+                    if (textStatus) textStatus.innerText = 'Sonidos On';
                 } else {
                     iconOn.classList.add('hidden');
                     iconOff.classList.remove('hidden');
-                    textStatus.innerText = 'Sonidos Off';
+                    if (textStatus) textStatus.innerText = 'Sonidos Off';
                 }
             }
         });
@@ -421,6 +549,12 @@ const app = {
 
             appState.user = { id: snapshot.docs[0].id, ...userData };
             
+            // --- GUARDAR SESIÓN SI EL USUARIO LO PIDIÓ ---
+            const keepSession = document.getElementById('login-keep-session').checked;
+            if (keepSession) {
+                localStorage.setItem('asist_session', JSON.stringify(appState.user));
+            }
+
             app.hideLoader();
             app.playSound('success-sound');
             document.getElementById('form-login').reset();
@@ -649,36 +783,71 @@ const app = {
         }
     },
 
-    startScanner: () => {
+    startScanner: async () => {
         const container = document.getElementById('scanner-container');
         container.classList.remove('hidden');
 
-        const html5QrCode = new Html5Qrcode("reader");
-        appState.scanner = html5QrCode;
+        try {
+            const cameras = await Html5Qrcode.getCameras();
+            if (!cameras || cameras.length === 0) {
+                throw new Error("No se detectaron cámaras");
+            }
 
-        // Sincronizado con el cuadro visual de 250px en el HTML
-        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+            // Lógica para elegir la mejor cámara (evitando gran angular)
+            // Normalmente la principal es la primera trasea o la que tiene etiqueta standard
+            let primaryCamera = cameras.find(c => 
+                c.label.toLowerCase().includes('back') && 
+                !c.label.toLowerCase().includes('wide') && 
+                !c.label.toLowerCase().includes('ultra')
+            ) || cameras.find(c => c.label.toLowerCase().includes('back')) || cameras[0];
 
-        html5QrCode.start({ facingMode: "environment" }, config, async (decodedText) => {
-            app.stopScanner();
-            app.playSound('success-sound');
-            
-            let idClase = decodedText;
-            let tokenQr = null;
-            try {
-                const parsed = JSON.parse(decodedText);
-                if (parsed.clase) {
-                    idClase = parsed.clase;
-                    tokenQr = parsed.token;
-                }
-            } catch(e) {}
+            console.log("Cámara seleccionada:", primaryCamera.label);
 
-            app.markAttendance(idClase, tokenQr);
-        }, (errorMessage) => {
-        }).catch(err => {
+            const html5QrCode = new Html5Qrcode("reader");
+            appState.scanner = html5QrCode;
+
+            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+
+            await html5QrCode.start(primaryCamera.id, config, async (decodedText) => {
+                app.stopScanner();
+                app.playSound('success-sound');
+                
+                let idClase = decodedText;
+                let tokenQr = null;
+                try {
+                    const parsed = JSON.parse(decodedText);
+                    if (parsed.clase) {
+                        idClase = parsed.clase;
+                        tokenQr = parsed.token;
+                    }
+                } catch(e) {}
+
+                app.markAttendance(idClase, tokenQr);
+            }, (errorMessage) => {
+                // Errores de escaneo comunes se ignoran para no saturar
+            });
+
+        } catch (err) {
+            console.error(err);
             container.classList.add('hidden');
-            app.alertError('Cámara', 'No se puede acceder a la cámara.');
-        });
+            app.alertError('Cámara', 'No se puede acceder a la cámara o no se encontró una adecuada.');
+        }
+    },
+
+    togglePasswordVisibility: () => {
+        const passInput = document.getElementById('login-pass');
+        const iconOpen = document.getElementById('icon-eye-open');
+        const iconClosed = document.getElementById('icon-eye-closed');
+        
+        if (passInput.type === 'password') {
+            passInput.type = 'text';
+            iconOpen.classList.add('hidden');
+            iconClosed.classList.remove('hidden');
+        } else {
+            passInput.type = 'password';
+            iconOpen.classList.remove('hidden');
+            iconClosed.classList.add('hidden');
+        }
     },
 
     stopScanner: () => {
@@ -1677,6 +1846,51 @@ const app = {
         const canvas = document.getElementById('signature-pad');
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+    },
+
+    initEditSignaturePad: () => {
+        const canvas = document.getElementById('edit-signature-pad');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        const resizeCanvas = () => {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width; canvas.height = 128;
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.lineCap = "round";
+        };
+        setTimeout(resizeCanvas, 500); window.addEventListener('resize', resizeCanvas);
+        const getPos = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+            if (e.touches && e.touches.length > 0) { x = e.touches[0].clientX - rect.left; y = e.touches[0].clientY - rect.top; }
+            else { x = e.clientX - rect.left; y = e.clientY - rect.top; }
+            return { x, y };
+        };
+        const startDraw = (e) => { e.preventDefault(); isDrawing = true; const { x, y } = getPos(e); ctx.beginPath(); ctx.moveTo(x, y); };
+        const draw = (e) => { if (!isDrawing) return; e.preventDefault(); const { x, y } = getPos(e); ctx.lineTo(x, y); ctx.stroke(); };
+        const stopDraw = () => { if (isDrawing) { ctx.closePath(); isDrawing = false; } };
+        canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw); canvas.addEventListener('mouseleave', stopDraw);
+        canvas.addEventListener('touchstart', startDraw, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDraw);
+        document.getElementById('btn-clear-edit-sig').addEventListener('click', app.clearEditSignature);
+    },
+
+    clearEditSignature: () => {
+        const canvas = document.getElementById('edit-signature-pad');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    },
+
+    getEditSignatureData: () => {
+        const canvas = document.getElementById('edit-signature-pad');
+        if (!canvas) return null;
+        const ctx = canvas.getContext('2d');
+        const pixelBuffer = new Uint32Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
+        const isEmpty = !pixelBuffer.some(color => color !== 0);
+        if (isEmpty) return null;
+        return canvas.toDataURL();
     },
 
     getSignatureData: () => {
